@@ -31,7 +31,13 @@
       "Bash(git -c user.name=\"taxo\" -c user.email=\"hitax99@gmail.com\" add .env.example)",
       "Bash(git -c user.name=\"taxo\" -c user.email=\"hitax99@gmail.com\" commit -m \"chore: add env example for Supabase\")",
       "Bash(git -c user.name=\"taxo\" -c user.email=\"hitax99@gmail.com\" add -A)",
-      "Bash(git -c user.name=\"taxo\" -c user.email=\"hitax99@gmail.com\" commit -m \"feat: add Supabase client/server/middleware helpers\")"
+      "Bash(git -c user.name=\"taxo\" -c user.email=\"hitax99@gmail.com\" commit -m \"feat: add Supabase client/server/middleware helpers\")",
+      "Bash(git -c user.name=\"taxo\" -c user.email=\"hitax99@gmail.com\" add src/middleware.ts)",
+      "Bash(git -c user.name=\"taxo\" -c user.email=\"hitax99@gmail.com\" commit -m \"feat: register auth middleware\")",
+      "Bash(git -c user.name=\"taxo\" -c user.email=\"hitax99@gmail.com\" add src/lib/auth.ts)",
+      "Bash(git -c user.name=\"taxo\" -c user.email=\"hitax99@gmail.com\" commit -m \"feat: add requireUser auth helper\")",
+      "Bash(git -c user.name=\"taxo\" -c user.email=\"hitax99@gmail.com\" add src/app/login/)",
+      "Bash(git -c user.name=\"taxo\" -c user.email=\"hitax99@gmail.com\" commit -m \"feat: add login page and action\")"
     ]
   }
 }
