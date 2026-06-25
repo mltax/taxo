@@ -27,6 +27,14 @@ export default async function DashboardPage() {
     inboxCount = count ?? 0;
   }
 
+  // 최근 공지 (상위 5개)
+  const { data: notices } = await supabase
+    .from("posts")
+    .select("id, title, created_at")
+    .eq("is_notice", true)
+    .order("created_at", { ascending: false })
+    .limit(5);
+
   return (
     <div className="space-y-6">
       <div>
@@ -48,6 +56,20 @@ export default async function DashboardPage() {
             </Card>
           </Link>
         )}
+      </div>
+      <div>
+        <h2 className="mb-3 text-lg font-semibold">최근 공지</h2>
+        <div className="divide-y rounded-md border">
+          {(notices ?? []).map((n) => (
+            <Link key={n.id} href={`/board/${n.id}`} className="flex items-center justify-between px-4 py-3 hover:bg-muted/50">
+              <span className="text-sm">{n.title}</span>
+              <span className="text-xs text-muted-foreground">{n.created_at?.slice(0, 10)}</span>
+            </Link>
+          ))}
+          {(notices ?? []).length === 0 && (
+            <p className="px-4 py-3 text-sm text-muted-foreground">공지가 없습니다.</p>
+          )}
+        </div>
       </div>
     </div>
   );
