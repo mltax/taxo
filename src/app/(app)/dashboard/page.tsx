@@ -1,16 +1,76 @@
+import Link from "next/link";
 import { requireUser } from "@/lib/auth";
+import { createClient } from "@/lib/supabase/server";
+import { canApprove } from "@/lib/roles";
+import {
+  Card, CardContent, CardHeader, CardTitle,
+} from "@/components/ui/card";
 
 export default async function DashboardPage() {
   const user = await requireUser();
+  const supabase = await createClient();
+
+  // 내 신청 상태별 건수
+  const { data: myClaims } = await supabase
+    .from("welfare_claims")
+    .select("status")
+    .eq("user_id", user.id);
+  const myPending = (myClaims ?? []).filter((c) => c.status === "pending").length;
+
+  // 결재자: 승인 대기 건수
+  let inboxCount = 0;
+  if (canApprove(user.role)) {
+    const { count } = await supabase
+      .from("welfare_claims")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "pending");
+    inboxCount = count ?? 0;
+  }
+
+  // 최근 공지 (상위 5개)
+  const { data: notices } = await supabase
+    .from("posts")
+    .select("id, title, created_at")
+    .eq("is_notice", true)
+    .order("created_at", { ascending: false })
+    .limit(5);
+
   return (
-    <div>
-      <h1 className="mb-2 text-2xl font-bold">홈</h1>
-      <p className="text-muted-foreground">
-        {user.name} 님, 환영합니다. ({user.department ?? "부서 미지정"})
-      </p>
-      <p className="mt-6 text-sm text-muted-foreground">
-        복지 청구·자료실 기능은 다음 단계에서 추가됩니다.
-      </p>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold">홈</h1>
+        <p className="text-muted-foreground">{user.name} 님, 환영합니다.</p>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <Link href="/welfare">
+          <Card className="transition hover:bg-muted/50">
+            <CardHeader><CardTitle className="text-base">내 승인 대기</CardTitle></CardHeader>
+            <CardContent className="text-3xl font-bold">{myPending}건</CardContent>
+          </Card>
+        </Link>
+        {canApprove(user.role) && (
+          <Link href="/welfare/inbox">
+            <Card className="transition hover:bg-muted/50">
+              <CardHeader><CardTitle className="text-base">결재 대기함</CardTitle></CardHeader>
+              <CardContent className="text-3xl font-bold">{inboxCount}건</CardContent>
+            </Card>
+          </Link>
+        )}
+      </div>
+      <div>
+        <h2 className="mb-3 text-lg font-semibold">최근 공지</h2>
+        <div className="divide-y rounded-md border">
+          {(notices ?? []).map((n) => (
+            <Link key={n.id} href={`/board/${n.id}`} className="flex items-center justify-between px-4 py-3 hover:bg-muted/50">
+              <span className="text-sm">{n.title}</span>
+              <span className="text-xs text-muted-foreground">{n.created_at?.slice(0, 10)}</span>
+            </Link>
+          ))}
+          {(notices ?? []).length === 0 && (
+            <p className="px-4 py-3 text-sm text-muted-foreground">공지가 없습니다.</p>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
