@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { navItemsForRole, type Role } from "@/lib/roles";
-import { RocketLogo } from "@/components/rocket-logo";
+import { BrandLogo } from "@/components/brand-logo";
 import { Button } from "@/components/ui/button";
 
 const ROLE_LABEL: Record<Role, string> = {
@@ -17,8 +17,8 @@ export function AppSidebar({ name, role }: { name: string; role: Role }) {
       <div className="bg-cosmic relative overflow-hidden px-4 py-5">
         <div className="bg-stars pointer-events-none absolute inset-0 opacity-70" />
         <div className="relative flex items-center gap-2">
-          <div className="grid size-9 place-items-center rounded-xl bg-white/10 backdrop-blur">
-            <RocketLogo className="h-6 w-6" />
+          <div className="grid size-9 place-items-center rounded-xl bg-white shadow ring-1 ring-white/20">
+            <BrandLogo className="h-6 w-6" />
           </div>
           <div className="leading-tight">
             <div className="text-sm font-bold text-white">세무법인 한영</div>

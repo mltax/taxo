@@ -2,7 +2,7 @@ import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { canApprove } from "@/lib/roles";
-import { RocketLogo } from "@/components/rocket-logo";
+import { BrandLogo } from "@/components/brand-logo";
 import {
   Card, CardContent, CardHeader, CardTitle,
 } from "@/components/ui/card";
@@ -40,10 +40,12 @@ export default async function DashboardPage() {
     <div className="space-y-6">
       <div className="bg-cosmic relative overflow-hidden rounded-2xl px-6 py-7 text-white shadow-lg">
         <div className="bg-stars pointer-events-none absolute inset-0 opacity-70" />
-        <RocketLogo className="animate-float absolute right-6 top-1/2 hidden h-16 w-16 -translate-y-1/2 opacity-90 drop-shadow-[0_0_18px_rgba(167,139,250,0.6)] sm:block" />
+        <div className="absolute right-6 top-1/2 hidden -translate-y-1/2 place-items-center rounded-2xl bg-white/95 p-3 shadow-lg sm:grid">
+          <BrandLogo className="h-12 w-12" />
+        </div>
         <div className="relative">
-          <h1 className="text-2xl font-bold">안녕하세요, {user.name} 님 🚀</h1>
-          <p className="mt-1 text-violet-100">세무법인 한영(창원) 사내 시스템에 오신 것을 환영합니다.</p>
+          <h1 className="text-2xl font-bold">안녕하세요, {user.name} 님</h1>
+          <p className="mt-1 text-slate-200">세무법인 한영(창원) 사내 시스템에 오신 것을 환영합니다.</p>
         </div>
       </div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
