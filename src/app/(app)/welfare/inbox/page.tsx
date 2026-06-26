@@ -13,18 +13,21 @@ export default async function InboxPage() {
   if (!canApprove(user.role)) redirect("/dashboard");
   const supabase = await createClient();
 
-  // 신청자 이름까지 조인
-  const { data: pending } = await supabase
-    .from("welfare_claims")
-    .select("id, amount, reason, created_at, users:user_id(name), welfare_items:item_id(name)")
-    .eq("status", "pending")
-    .order("created_at");
-
-  const { data: approved } = await supabase
-    .from("welfare_claims")
-    .select("id, amount, reason, approved_at, users:user_id(name), welfare_items:item_id(name)")
-    .eq("status", "approved")
-    .order("approved_at");
+  // 대기/승인 목록 병렬 조회
+  const [pendingRes, approvedRes] = await Promise.all([
+    supabase
+      .from("welfare_claims")
+      .select("id, amount, reason, created_at, users:user_id(name), welfare_items:item_id(name)")
+      .eq("status", "pending")
+      .order("created_at"),
+    supabase
+      .from("welfare_claims")
+      .select("id, amount, reason, approved_at, users:user_id(name), welfare_items:item_id(name)")
+      .eq("status", "approved")
+      .order("approved_at"),
+  ]);
+  const pending = pendingRes.data;
+  const approved = approvedRes.data;
 
   return (
     <div className="space-y-8">

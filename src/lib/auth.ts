@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { Role } from "@/lib/roles";
@@ -11,8 +12,11 @@ export interface AppUser {
   is_active: boolean;
 }
 
-/** 로그인 + 활성 계정이 아니면 /login 으로 보낸다. */
-export async function requireUser(): Promise<AppUser> {
+/**
+ * 로그인 + 활성 계정이 아니면 /login 으로 보낸다.
+ * React cache()로 감싸 한 요청(레이아웃+페이지) 안에서는 1회만 실행 → 인증/프로필 조회 중복 제거.
+ */
+export const requireUser = cache(async (): Promise<AppUser> => {
   const supabase = await createClient();
   const {
     data: { user },
@@ -30,4 +34,4 @@ export async function requireUser(): Promise<AppUser> {
     redirect("/login?error=inactive");
   }
   return profile as AppUser;
-}
+});
