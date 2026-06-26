@@ -1,4 +1,5 @@
 import { login } from "./actions";
+import { RocketLogo } from "@/components/rocket-logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,11 +18,19 @@ export default async function LoginPage({
 }) {
   const { error } = await searchParams;
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted/40 p-4">
-      <Card className="w-full max-w-sm">
-        <CardHeader>
-          <CardTitle>세무사무소 사내 시스템</CardTitle>
-          <CardDescription>관리자가 발급한 계정으로 로그인하세요</CardDescription>
+    <div className="bg-cosmic relative flex min-h-screen items-center justify-center overflow-hidden p-4">
+      {/* 별빛 레이어 */}
+      <div className="bg-stars pointer-events-none absolute inset-0" />
+      {/* 장식용 떠다니는 로켓 */}
+      <RocketLogo className="animate-float pointer-events-none absolute left-[12%] top-[18%] hidden h-16 w-16 opacity-80 drop-shadow-[0_0_18px_rgba(167,139,250,0.6)] sm:block" />
+
+      <Card className="relative z-10 w-full max-w-sm border-white/15 bg-white/95 shadow-2xl shadow-violet-950/50 backdrop-blur">
+        <CardHeader className="items-center text-center">
+          <div className="mb-2 grid size-16 place-items-center rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 shadow-lg shadow-violet-500/40">
+            <RocketLogo className="h-10 w-10" />
+          </div>
+          <CardTitle className="text-xl">세무법인 한영(창원)</CardTitle>
+          <CardDescription>사내 시스템 · 관리자가 발급한 계정으로 로그인</CardDescription>
         </CardHeader>
         <CardContent>
           <form action={login} className="space-y-4">
@@ -44,11 +53,15 @@ export default async function LoginPage({
               </p>
             )}
             <Button type="submit" className="w-full">
-              로그인
+              🚀 로그인
             </Button>
           </form>
         </CardContent>
       </Card>
+
+      <p className="absolute bottom-4 z-10 text-center text-xs text-white/60">
+        세무법인 한영(창원) · 사내 복지·자료 시스템
+      </p>
     </div>
   );
 }
