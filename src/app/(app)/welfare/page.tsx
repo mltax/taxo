@@ -14,17 +14,21 @@ export default async function WelfarePage() {
   const user = await requireUser();
   const supabase = await createClient();
 
-  const { data: items } = await supabase
-    .from("welfare_items")
-    .select("id, name, monthly_limit")
-    .eq("is_active", true)
-    .order("name");
-
-  const { data: claims } = await supabase
-    .from("welfare_claims")
-    .select("id, item_id, amount, reason, status, created_at, reject_reason")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false });
+  // 독립 쿼리 병렬 실행
+  const [itemsRes, claimsRes] = await Promise.all([
+    supabase
+      .from("welfare_items")
+      .select("id, name, monthly_limit")
+      .eq("is_active", true)
+      .order("name"),
+    supabase
+      .from("welfare_claims")
+      .select("id, item_id, amount, reason, status, created_at, reject_reason")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false }),
+  ]);
+  const items = itemsRes.data;
+  const claims = claimsRes.data;
 
   const itemName = new Map((items ?? []).map((i) => [i.id, i.name]));
 

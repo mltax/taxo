@@ -10,31 +10,28 @@ import {
 export default async function DashboardPage() {
   const user = await requireUser();
   const supabase = await createClient();
+  const isApprover = canApprove(user.role);
 
-  // 내 신청 상태별 건수
-  const { data: myClaims } = await supabase
-    .from("welfare_claims")
-    .select("status")
-    .eq("user_id", user.id);
-  const myPending = (myClaims ?? []).filter((c) => c.status === "pending").length;
+  // 독립 쿼리들을 병렬 실행 (네트워크 왕복 한 번으로 묶음)
+  const [myClaimsRes, inboxRes, noticesRes] = await Promise.all([
+    supabase.from("welfare_claims").select("status").eq("user_id", user.id),
+    isApprover
+      ? supabase
+          .from("welfare_claims")
+          .select("id", { count: "exact", head: true })
+          .eq("status", "pending")
+      : Promise.resolve({ count: 0 }),
+    supabase
+      .from("posts")
+      .select("id, title, created_at")
+      .eq("is_notice", true)
+      .order("created_at", { ascending: false })
+      .limit(5),
+  ]);
 
-  // 결재자: 승인 대기 건수
-  let inboxCount = 0;
-  if (canApprove(user.role)) {
-    const { count } = await supabase
-      .from("welfare_claims")
-      .select("id", { count: "exact", head: true })
-      .eq("status", "pending");
-    inboxCount = count ?? 0;
-  }
-
-  // 최근 공지 (상위 5개)
-  const { data: notices } = await supabase
-    .from("posts")
-    .select("id, title, created_at")
-    .eq("is_notice", true)
-    .order("created_at", { ascending: false })
-    .limit(5);
+  const myPending = (myClaimsRes.data ?? []).filter((c) => c.status === "pending").length;
+  const inboxCount = inboxRes.count ?? 0;
+  const notices = noticesRes.data;
 
   return (
     <div className="space-y-6">
