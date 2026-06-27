@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth";
-import { canManageHR, type Role } from "@/lib/roles";
+import { canManageHR } from "@/lib/roles";
 import { computeLegalLeave } from "@/lib/leave/calc";
 
 async function assertHR() {
@@ -120,5 +120,3 @@ export async function setGrant(userId: string, year: number, days: number) {
   if (error) throw new Error("부여일수 수정 실패");
   revalidatePath("/admin/leave");
 }
-
-export type { Role };
