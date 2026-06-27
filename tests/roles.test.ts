@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { canApprove, canAdmin, canManageHR, navItemsForRole, type Role } from "@/lib/roles";
+import { canApprove, canAdmin, navItemsForRole } from "@/lib/roles";
 
 describe("roles", () => {
   it("approver and admin can approve, staff cannot", () => {
@@ -28,16 +28,10 @@ describe("roles", () => {
     expect(labels).not.toContain("관리자");
   });
 
-  it("admin sees 관리자", () => {
+  it("admin sees 관리자 and 인사", () => {
     const labels = navItemsForRole("admin").map((i) => i.label);
     expect(labels).toContain("관리자");
-  });
-
-  it("hr_manager and admin can manage HR; others cannot", () => {
-    expect(canManageHR("staff")).toBe(false);
-    expect(canManageHR("approver")).toBe(false);
-    expect(canManageHR("hr_manager")).toBe(true);
-    expect(canManageHR("admin")).toBe(true);
+    expect(labels).toContain("인사");
   });
 
   it("hr_manager can approve", () => {
@@ -57,7 +51,9 @@ describe("roles", () => {
     expect(labels).not.toContain("인사");
   });
 
-  it("hr_manager sees 인사", () => {
-    expect(navItemsForRole("hr_manager").map((i) => i.label)).toContain("인사");
+  it("hr_manager does NOT see 인사 (HR is admin-only)", () => {
+    const labels = navItemsForRole("hr_manager").map((i) => i.label);
+    expect(labels).not.toContain("인사");
+    expect(labels).not.toContain("관리자");
   });
 });

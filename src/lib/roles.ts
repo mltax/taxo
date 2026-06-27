@@ -9,10 +9,6 @@ export function canApprove(role: Role): boolean {
   return role === "approver" || role === "hr_manager" || role === "admin";
 }
 
-export function canManageHR(role: Role): boolean {
-  return role === "hr_manager" || role === "admin";
-}
-
 export function canAdmin(role: Role): boolean {
   return role === "admin";
 }
@@ -28,10 +24,9 @@ export function navItemsForRole(role: Role): NavItem[] {
     items.push({ label: "승인 대기함", href: "/welfare/inbox" });
     items.push({ label: "연차 승인함", href: "/leave/inbox" });
   }
-  if (canManageHR(role)) {
-    items.push({ label: "인사", href: "/admin/teams" });
-  }
   if (canAdmin(role)) {
+    // 인사·관리자 영역은 대표(admin) 전용
+    items.push({ label: "인사", href: "/admin/teams" });
     items.push({ label: "관리자", href: "/admin/employees" });
   }
   return items;

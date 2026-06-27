@@ -3,12 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth";
-import { canManageHR } from "@/lib/roles";
+import { canAdmin } from "@/lib/roles";
 import { computeLegalLeave } from "@/lib/leave/calc";
 
 async function assertHR() {
   const user = await requireUser();
-  if (!canManageHR(user.role)) throw new Error("인사 관리 권한이 필요합니다.");
+  // 인사 관리는 대표(admin) 전용
+  if (!canAdmin(user.role)) throw new Error("인사 관리 권한이 필요합니다.");
 }
 
 /** 팀 생성 */
