@@ -1,3 +1,6 @@
+import { redirect } from "next/navigation";
+import { requireUser } from "@/lib/auth";
+import { canAdmin } from "@/lib/roles";
 import { createClient } from "@/lib/supabase/server";
 import { NewEmployee } from "./new-employee";
 import { RoleSelect, ActiveToggle } from "./employee-row";
@@ -11,6 +14,8 @@ import { Badge } from "@/components/ui/badge";
 import type { Role } from "@/lib/roles";
 
 export default async function EmployeesPage() {
+  const me = await requireUser();
+  if (!canAdmin(me.role)) redirect("/admin/teams");
   const supabase = await createClient();
   const { data: users } = await supabase
     .from("users")

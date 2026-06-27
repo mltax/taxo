@@ -1,3 +1,6 @@
+import { redirect } from "next/navigation";
+import { requireUser } from "@/lib/auth";
+import { canAdmin } from "@/lib/roles";
 import { createClient } from "@/lib/supabase/server";
 import { ItemForm } from "./item-form";
 import { ItemToggle } from "./item-toggle";
@@ -10,6 +13,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 
 export default async function ItemsPage() {
+  const me = await requireUser();
+  if (!canAdmin(me.role)) redirect("/admin/teams");
   const supabase = await createClient();
   const { data: items } = await supabase
     .from("welfare_items")
