@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { navItemsForRole, type Role } from "@/lib/roles";
 import { BrandLogo } from "@/components/brand-logo";
+import { SidebarNav } from "@/components/sidebar-nav";
 import { Button } from "@/components/ui/button";
 
 const ROLE_LABEL: Record<Role, string> = {
@@ -31,17 +31,7 @@ export function AppSidebar({ name, role }: { name: string; role: Role }) {
         </div>
       </div>
 
-      <nav className="flex flex-1 flex-col gap-1 p-3">
-        {items.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className="rounded-md px-3 py-2 text-sm font-medium text-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-          >
-            {item.label}
-          </Link>
-        ))}
-      </nav>
+      <SidebarNav items={items} />
       <div className="p-3">
         <form action="/auth/signout" method="post">
           <Button type="submit" variant="outline" className="w-full">
