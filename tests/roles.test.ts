@@ -22,24 +22,25 @@ describe("roles", () => {
     expect(canAdmin("admin")).toBe(true);
   });
 
-  it("staff sees base nav without 승인함/관리자", () => {
-    const labels = navItemsForRole("staff").map((i) => i.label);
-    expect(labels).toContain("홈");
-    expect(labels).toContain("복지 청구");
-    expect(labels).not.toContain("승인 대기함");
-    expect(labels).not.toContain("관리자");
+  it("staff sees 한영복지신청 group with 복지신청, no 승인함/관리자", () => {
+    const top = navItemsForRole("staff").map((i) => i.label);
+    expect(top).toContain("홈");
+    expect(top).toContain("한영복지신청");
+    expect(allLabels("staff")).toContain("복지신청");
+    expect(allLabels("staff")).not.toContain("승인 대기함");
+    expect(top).not.toContain("관리자");
   });
 
-  it("approver sees 승인 대기함 but not 관리자", () => {
-    const labels = navItemsForRole("approver").map((i) => i.label);
-    expect(labels).toContain("승인 대기함");
-    expect(labels).not.toContain("관리자");
+  it("approver sees 승인 대기함 under 한영복지신청 but not 관리자", () => {
+    const welfareGroup = navItemsForRole("approver").find((i) => i.label === "한영복지신청");
+    expect(welfareGroup?.children?.map((c) => c.label)).toContain("승인 대기함");
+    expect(navItemsForRole("approver").map((i) => i.label)).not.toContain("관리자");
   });
 
-  it("admin sees 관리자 and 인사", () => {
+  it("admin sees 관리자 but not separate 인사 item", () => {
     const labels = navItemsForRole("admin").map((i) => i.label);
     expect(labels).toContain("관리자");
-    expect(labels).toContain("인사");
+    expect(labels).not.toContain("인사");
   });
 
   it("hr_manager can approve", () => {

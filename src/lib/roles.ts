@@ -15,7 +15,13 @@ export function canAdmin(role: Role): boolean {
 }
 
 export function navItemsForRole(role: Role): NavItem[] {
-  // 연차 관리 그룹 (클릭 시 펼쳐지는 하위 항목)
+  // 한영복지신청 그룹
+  const welfareChildren: NavItem[] = [{ label: "복지신청", href: "/welfare" }];
+  if (canApprove(role)) {
+    welfareChildren.push({ label: "승인 대기함", href: "/welfare/inbox" });
+  }
+
+  // 연차 관리 그룹
   const leaveChildren: NavItem[] = [{ label: "연차 신청", href: "/leave" }];
   if (canApprove(role)) {
     leaveChildren.push({ label: "연차 승인함", href: "/leave/inbox" });
@@ -23,17 +29,13 @@ export function navItemsForRole(role: Role): NavItem[] {
 
   const items: NavItem[] = [
     { label: "홈", href: "/dashboard" },
-    { label: "복지 청구", href: "/welfare" },
+    { label: "한영복지신청", children: welfareChildren },
     { label: "자료실", href: "/board" },
     { label: "연차 관리", children: leaveChildren },
   ];
-  if (canApprove(role)) {
-    items.push({ label: "승인 대기함", href: "/welfare/inbox" });
-  }
   if (canAdmin(role)) {
-    // 인사·관리자 영역은 대표(admin) 전용
-    items.push({ label: "인사", href: "/admin/teams" });
-    items.push({ label: "관리자", href: "/admin/employees" });
+    // 관리자(인사·연차·계정·복지항목) 영역은 대표(admin) 전용
+    items.push({ label: "관리자", href: "/admin/teams" });
   }
   return items;
 }
