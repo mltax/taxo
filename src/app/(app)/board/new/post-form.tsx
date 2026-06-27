@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { BOARD_CATEGORIES } from "@/lib/board/constants";
 
-export function PostForm() {
+export function PostForm({ defaultBoard = "work" }: { defaultBoard?: "free" | "work" }) {
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
@@ -27,6 +27,13 @@ export function PostForm() {
 
   return (
     <form action={action} className="space-y-4 max-w-2xl">
+      <div className="space-y-2">
+        <Label htmlFor="board_type">게시판</Label>
+        <select id="board_type" name="board_type" defaultValue={defaultBoard} className="w-full rounded-md border px-3 py-2 text-sm">
+          <option value="free">자유게시판</option>
+          <option value="work">업무공유게시판</option>
+        </select>
+      </div>
       <div className="space-y-2">
         <Label htmlFor="title">제목</Label>
         <Input id="title" name="title" required />

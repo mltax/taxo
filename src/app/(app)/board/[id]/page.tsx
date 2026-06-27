@@ -20,10 +20,12 @@ export default async function PostDetailPage({
 
   const { data: post } = await supabase
     .from("posts")
-    .select("id, title, category, body, is_notice, created_at, users:author_id(name)")
+    .select("id, title, category, body, is_notice, board_type, created_at, users:author_id(name)")
     .eq("id", id)
     .single();
   if (!post) notFound();
+
+  const backHref = post.board_type === "free" ? "/board/free" : "/board/work";
 
   const { data: files } = await supabase
     .from("post_files")
@@ -44,7 +46,7 @@ export default async function PostDetailPage({
 
   return (
     <div className="space-y-4">
-      <Link href="/board" className="text-sm text-muted-foreground hover:underline">← 목록</Link>
+      <Link href={backHref} className="text-sm text-muted-foreground hover:underline">← 목록</Link>
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
