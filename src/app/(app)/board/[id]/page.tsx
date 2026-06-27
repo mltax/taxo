@@ -2,12 +2,16 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { canAdmin } from "@/lib/roles";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import {
   Card, CardContent, CardHeader, CardTitle,
 } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { StarDisplay } from "@/components/star-display";
+import { RateStars } from "./rate-stars";
+import { RewardInput } from "./reward-input";
 
 export default async function PostDetailPage({
   params,
@@ -15,15 +19,31 @@ export default async function PostDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  await requireUser();
+  const user = await requireUser();
   const supabase = await createClient();
 
   const { data: post } = await supabase
     .from("posts")
-    .select("id, title, category, body, is_notice, created_at, users:author_id(name)")
+    .select("id, title, category, body, is_notice, board_type, reward_points, created_at, users:author_id(name)")
     .eq("id", id)
     .single();
   if (!post) notFound();
+
+  const backHref = post.board_type === "free" ? "/board/free" : "/board/work";
+
+  // 업무공유 글: 평균 별점 + 내 투표 조회
+  const isWork = post.board_type === "work";
+  let avg = 0, voteCount = 0, myScore: number | null = null;
+  if (isWork) {
+    const [{ data: summary }, { data: mine }] = await Promise.all([
+      supabase.rpc("post_rating_summary", { p_post_id: id }),
+      supabase.from("post_ratings").select("score").eq("post_id", id).eq("voter_id", user.id).maybeSingle(),
+    ]);
+    const row = Array.isArray(summary) ? summary[0] : summary;
+    avg = Number(row?.avg_score ?? 0);
+    voteCount = Number(row?.vote_count ?? 0);
+    myScore = mine?.score ?? null;
+  }
 
   const { data: files } = await supabase
     .from("post_files")
@@ -44,7 +64,7 @@ export default async function PostDetailPage({
 
   return (
     <div className="space-y-4">
-      <Link href="/board" className="text-sm text-muted-foreground hover:underline">← 목록</Link>
+      <Link href={backHref} className="text-sm text-muted-foreground hover:underline">← 목록</Link>
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
@@ -77,6 +97,30 @@ export default async function PostDetailPage({
                   )}
                 </div>
               ))}
+            </div>
+          )}
+
+          {isWork && (
+            <div className="space-y-3 border-t pt-4">
+              <p className="text-sm font-semibold">평가</p>
+              <div className="flex flex-wrap items-center gap-x-8 gap-y-2">
+                <div>
+                  <div className="text-xs text-muted-foreground">평균</div>
+                  <StarDisplay avg={avg} count={voteCount} />
+                </div>
+                <RateStars postId={post.id} myScore={myScore} />
+              </div>
+              <div className="flex flex-wrap items-center gap-2 pt-1">
+                <span className="text-sm font-medium">포상 포인트:</span>
+                {post.reward_points ? (
+                  <Badge className="text-sm">{post.reward_points.toLocaleString()}P</Badge>
+                ) : (
+                  <span className="text-sm text-muted-foreground">미부여</span>
+                )}
+                {canAdmin(user.role) && (
+                  <RewardInput postId={post.id} current={post.reward_points} />
+                )}
+              </div>
             </div>
           )}
         </CardContent>

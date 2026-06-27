@@ -26,4 +26,5 @@ export const STATUS_LABEL: Record<ClaimStatus, string> = {
   approved: "승인됨",
   rejected: "반려됨",
   paid: "지급 완료",
+  cancelled: "회수됨",
 };

@@ -30,7 +30,13 @@ export function navItemsForRole(role: Role): NavItem[] {
   const items: NavItem[] = [
     { label: "홈", href: "/dashboard" },
     { label: "한영복지신청", children: welfareChildren },
-    { label: "자료실", href: "/board" },
+    {
+      label: "게시판",
+      children: [
+        { label: "자유게시판", href: "/board/free" },
+        { label: "업무공유게시판", href: "/board/work" },
+      ],
+    },
     { label: "연차 관리", children: leaveChildren },
   ];
   if (canAdmin(role)) {

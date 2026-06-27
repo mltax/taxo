@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { submitClaim } from "@/lib/welfare/actions";
+import { MAX_ATTACHMENT_BYTES, MAX_ATTACHMENT_MB } from "@/lib/welfare/constants";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,6 +14,11 @@ export function ClaimForm({ items }: { items: WelfareItem[] }) {
 
   async function action(formData: FormData) {
     setError(null);
+    const file = formData.get("file");
+    if (file instanceof File && file.size > MAX_ATTACHMENT_BYTES) {
+      setError(`첨부파일은 ${MAX_ATTACHMENT_MB}MB 이하만 가능합니다.`);
+      return;
+    }
     setPending(true);
     try {
       await submitClaim(formData);
@@ -44,7 +50,7 @@ export function ClaimForm({ items }: { items: WelfareItem[] }) {
         <Input id="reason" name="reason" required />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="file">증빙 첨부 (선택)</Label>
+        <Label htmlFor="file">증빙 첨부 (선택, 최대 {MAX_ATTACHMENT_MB}MB)</Label>
         <Input id="file" name="file" type="file" accept="image/*,application/pdf" />
       </div>
       {error && <p className="text-sm text-destructive">{error}</p>}

@@ -9,10 +9,11 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 
-const STATUS_VARIANT: Record<LeaveStatus, "secondary" | "default" | "destructive"> = {
+const STATUS_VARIANT: Record<LeaveStatus, "secondary" | "default" | "destructive" | "outline"> = {
   pending: "secondary",
   approved: "default",
   rejected: "destructive",
+  cancelled: "outline",
 };
 
 export default async function LeaveInboxPage() {
