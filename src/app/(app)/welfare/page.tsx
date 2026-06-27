@@ -35,7 +35,7 @@ export default async function WelfarePage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="mb-4 text-2xl font-bold">복지 청구</h1>
+        <h1 className="mb-4 text-2xl font-bold">한영복지신청</h1>
         <Card>
           <CardHeader><CardTitle>새 신청</CardTitle></CardHeader>
           <CardContent>
