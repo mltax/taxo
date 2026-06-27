@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 const ROLE_LABEL: Record<Role, string> = {
   staff: "직원",
   approver: "결재자",
+  hr_manager: "인사관리자",
   admin: "관리자",
 };
 

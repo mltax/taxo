@@ -47,6 +47,7 @@ export function NewEmployee() {
         <select id="role" name="role" className="w-full rounded-md border px-3 py-2 text-sm">
           <option value="staff">직원</option>
           <option value="approver">결재자</option>
+          <option value="hr_manager">인사관리자</option>
           <option value="admin">관리자</option>
         </select>
       </div>

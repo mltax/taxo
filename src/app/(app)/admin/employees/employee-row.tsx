@@ -20,6 +20,7 @@ export function RoleSelect({ userId, role }: { userId: string; role: Role }) {
     >
       <option value="staff">직원</option>
       <option value="approver">결재자</option>
+      <option value="hr_manager">인사관리자</option>
       <option value="admin">관리자</option>
     </select>
   );
