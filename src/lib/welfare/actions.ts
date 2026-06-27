@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth";
 import { canApprove, canAdmin } from "@/lib/roles";
+import { MAX_ATTACHMENT_BYTES } from "@/lib/welfare/constants";
 
 /** 직원: 복지 청구 신청 (pending 생성 + 증빙 업로드) */
 export async function submitClaim(formData: FormData) {
@@ -18,6 +19,9 @@ export async function submitClaim(formData: FormData) {
   if (!itemId) throw new Error("복지 항목을 선택하세요.");
   if (!Number.isInteger(amount) || amount <= 0) throw new Error("금액을 올바르게 입력하세요.");
   if (!reason) throw new Error("사유를 입력하세요.");
+  if (file && file.size > MAX_ATTACHMENT_BYTES) {
+    throw new Error("첨부파일은 5MB 이하만 가능합니다.");
+  }
 
   // 청구 생성 (status 기본값 pending)
   const { data: claim, error } = await supabase
@@ -82,4 +86,18 @@ export async function markPaid(claimId: string) {
     .eq("status", "approved");
   if (error) throw new Error("지급 처리에 실패했습니다.");
   revalidatePath("/welfare/inbox");
+}
+
+/** 신청자: 승인 전(대기) 본인 신청 회수 */
+export async function withdrawClaim(claimId: string) {
+  const user = await requireUser();
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("welfare_claims")
+    .update({ status: "cancelled" })
+    .eq("id", claimId)
+    .eq("user_id", user.id)
+    .eq("status", "pending");
+  if (error) throw new Error("회수에 실패했습니다.");
+  revalidatePath("/welfare");
 }

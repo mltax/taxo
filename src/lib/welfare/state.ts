@@ -1,4 +1,4 @@
-export type ClaimStatus = "draft" | "pending" | "approved" | "rejected" | "paid";
+export type ClaimStatus = "draft" | "pending" | "approved" | "rejected" | "paid" | "cancelled";
 export type ClaimAction = "approve" | "reject" | "pay";
 
 const TRANSITIONS: Record<ClaimAction, { from: ClaimStatus; to: ClaimStatus }> = {

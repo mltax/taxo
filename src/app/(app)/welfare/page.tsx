@@ -1,6 +1,7 @@
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { ClaimForm } from "./claim-form";
+import { WithdrawClaimButton } from "./withdraw-button";
 import { StatusBadge } from "@/components/status-badge";
 import {
   Card, CardContent, CardHeader, CardTitle,
@@ -54,6 +55,7 @@ export default async function WelfarePage() {
               <TableHead>사유</TableHead>
               <TableHead>상태</TableHead>
               <TableHead>신청일</TableHead>
+              <TableHead>관리</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -69,10 +71,13 @@ export default async function WelfarePage() {
                 </TableCell>
                 <TableCell><StatusBadge status={c.status!} /></TableCell>
                 <TableCell>{c.created_at?.slice(0, 10)}</TableCell>
+                <TableCell>
+                  {c.status === "pending" && <WithdrawClaimButton id={c.id!} />}
+                </TableCell>
               </TableRow>
             ))}
             {(claims ?? []).length === 0 && (
-              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground">신청 내역이 없습니다.</TableCell></TableRow>
+              <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground">신청 내역이 없습니다.</TableCell></TableRow>
             )}
           </TableBody>
         </Table>

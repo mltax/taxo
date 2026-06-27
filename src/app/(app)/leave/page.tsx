@@ -1,6 +1,7 @@
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { LeaveForm } from "./leave-form";
+import { WithdrawLeaveButton } from "./withdraw-button";
 import { LEAVE_STATUS_LABEL, type LeaveStatus } from "@/lib/leave/types";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -58,6 +59,7 @@ export default async function LeavePage() {
             <TableRow>
               <TableHead>기간</TableHead><TableHead>일수</TableHead>
               <TableHead>사유</TableHead><TableHead>상태</TableHead>
+              <TableHead>관리</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -75,10 +77,13 @@ export default async function LeavePage() {
                   )}
                 </TableCell>
                 <TableCell><Badge variant={r.status === "rejected" ? "destructive" : r.status === "approved" ? "default" : "secondary"}>{LEAVE_STATUS_LABEL[r.status as LeaveStatus]}</Badge></TableCell>
+                <TableCell>
+                  {r.status === "pending" && <WithdrawLeaveButton id={r.id} />}
+                </TableCell>
               </TableRow>
             ))}
             {requests.length === 0 && (
-              <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground">신청 내역이 없습니다.</TableCell></TableRow>
+              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground">신청 내역이 없습니다.</TableCell></TableRow>
             )}
           </TableBody>
         </Table>

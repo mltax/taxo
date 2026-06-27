@@ -1,9 +1,10 @@
-export type LeaveStatus = "pending" | "approved" | "rejected";
+export type LeaveStatus = "pending" | "approved" | "rejected" | "cancelled";
 
 export const LEAVE_STATUS_LABEL: Record<LeaveStatus, string> = {
   pending: "승인 대기",
   approved: "승인됨",
   rejected: "반려됨",
+  cancelled: "회수됨",
 };
 
 export interface LeaveRequest {

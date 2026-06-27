@@ -8,6 +8,7 @@ const VARIANT: Record<ClaimStatus, "secondary" | "default" | "destructive" | "ou
   approved: "default",
   rejected: "destructive",
   paid: "default",
+  cancelled: "outline",
 };
 
 export function StatusBadge({ status }: { status: ClaimStatus }) {

@@ -76,3 +76,17 @@ export async function rejectLeave(id: string, reason: string) {
   if (error) throw new Error("반려 처리에 실패했습니다.");
   revalidatePath("/leave/inbox");
 }
+
+/** 신청자: 승인 전(대기) 본인 신청 회수 */
+export async function withdrawLeave(id: string) {
+  const user = await requireUser();
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("leave_requests")
+    .update({ status: "cancelled" })
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .eq("status", "pending");
+  if (error) throw new Error("회수에 실패했습니다.");
+  revalidatePath("/leave");
+}
