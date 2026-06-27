@@ -13,7 +13,8 @@ export default async function DashboardPage() {
   const isApprover = canApprove(user.role);
 
   // 독립 쿼리들을 병렬 실행 (네트워크 왕복 한 번으로 묶음)
-  const [myClaimsRes, inboxRes, noticesRes] = await Promise.all([
+  const year = new Date().getFullYear();
+  const [myClaimsRes, inboxRes, noticesRes, grantRes, leaveUsedRes] = await Promise.all([
     supabase.from("welfare_claims").select("status").eq("user_id", user.id),
     isApprover
       ? supabase
@@ -27,11 +28,18 @@ export default async function DashboardPage() {
       .eq("is_notice", true)
       .order("created_at", { ascending: false })
       .limit(5),
+    supabase.from("leave_grants").select("granted_days").eq("user_id", user.id).eq("year", year).maybeSingle(),
+    supabase.from("leave_requests").select("days, start_date").eq("user_id", user.id).eq("status", "approved"),
   ]);
 
   const myPending = (myClaimsRes.data ?? []).filter((c) => c.status === "pending").length;
   const inboxCount = inboxRes.count ?? 0;
   const notices = noticesRes.data;
+  const granted = Number(grantRes.data?.granted_days ?? 0);
+  const usedLeave = (leaveUsedRes.data ?? [])
+    .filter((r) => r.start_date.startsWith(String(year)))
+    .reduce((s, r) => s + Number(r.days), 0);
+  const remainingLeave = granted - usedLeave;
 
   return (
     <div className="space-y-6">
@@ -60,6 +68,12 @@ export default async function DashboardPage() {
             </Card>
           </Link>
         )}
+        <Link href="/leave">
+          <Card className="transition hover:bg-muted/50">
+            <CardHeader><CardTitle className="text-base">내 잔여 연차</CardTitle></CardHeader>
+            <CardContent className="text-3xl font-bold">{remainingLeave}일</CardContent>
+          </Card>
+        </Link>
       </div>
       <div>
         <h2 className="mb-3 text-lg font-semibold">최근 공지</h2>
