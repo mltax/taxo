@@ -1,5 +1,13 @@
 import { describe, it, expect } from "vitest";
-import { canApprove, canAdmin, navItemsForRole } from "@/lib/roles";
+import { canApprove, canAdmin, navItemsForRole, type Role, type NavItem } from "@/lib/roles";
+
+/** 최상위 + 하위 항목 라벨을 모두 평탄화 */
+function allLabels(role: Role): string[] {
+  return navItemsForRole(role).flatMap((i: NavItem) => [
+    i.label,
+    ...(i.children ?? []).map((c) => c.label),
+  ]);
+}
 
 describe("roles", () => {
   it("approver and admin can approve, staff cannot", () => {
@@ -38,17 +46,22 @@ describe("roles", () => {
     expect(canApprove("hr_manager")).toBe(true);
   });
 
-  it("staff sees 연차 but not 연차 승인함/인사", () => {
-    const labels = navItemsForRole("staff").map((i) => i.label);
-    expect(labels).toContain("연차");
+  it("연차 관리 그룹과 연차 신청 하위가 모두에게 보인다", () => {
+    const top = navItemsForRole("staff").map((i) => i.label);
+    expect(top).toContain("연차 관리");
+    expect(allLabels("staff")).toContain("연차 신청");
+  });
+
+  it("staff는 연차 승인함/인사가 없다", () => {
+    const labels = allLabels("staff");
     expect(labels).not.toContain("연차 승인함");
     expect(labels).not.toContain("인사");
   });
 
-  it("approver sees 연차 승인함 but not 인사", () => {
-    const labels = navItemsForRole("approver").map((i) => i.label);
-    expect(labels).toContain("연차 승인함");
-    expect(labels).not.toContain("인사");
+  it("approver는 연차 승인함이 연차 관리 하위에 있고 인사는 없다", () => {
+    const leaveGroup = navItemsForRole("approver").find((i) => i.label === "연차 관리");
+    expect(leaveGroup?.children?.map((c) => c.label)).toContain("연차 승인함");
+    expect(allLabels("approver")).not.toContain("인사");
   });
 
   it("hr_manager does NOT see 인사 (HR is admin-only)", () => {
