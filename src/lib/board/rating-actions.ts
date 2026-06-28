@@ -32,7 +32,7 @@ export async function setRewardPoints(postId: string, points: number) {
   const supabase = await createClient();
   const { error } = await supabase
     .from("posts")
-    .update({ reward_points: points })
+    .update({ reward_points: points, reward_points_at: new Date().toISOString() })
     .eq("id", postId);
   if (error) throw new Error("포인트 등록에 실패했습니다.");
   revalidatePath(`/board/${postId}`);
