@@ -3,6 +3,7 @@ import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { canApprove } from "@/lib/roles";
 import { BrandLogo } from "@/components/brand-logo";
+import { Badge } from "@/components/ui/badge";
 import {
   Card, CardContent, CardHeader, CardTitle,
 } from "@/components/ui/card";
@@ -14,7 +15,8 @@ export default async function DashboardPage() {
 
   // 독립 쿼리들을 병렬 실행 (네트워크 왕복 한 번으로 묶음)
   const year = new Date().getFullYear();
-  const [myClaimsRes, inboxRes, noticesRes, grantRes, leaveUsedRes] = await Promise.all([
+  const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
+  const [myClaimsRes, inboxRes, noticesRes, grantRes, leaveUsedRes, myPostsRes] = await Promise.all([
     supabase.from("welfare_claims").select("status").eq("user_id", user.id),
     isApprover
       ? supabase
@@ -30,6 +32,11 @@ export default async function DashboardPage() {
       .limit(5),
     supabase.from("leave_grants").select("granted_days").eq("user_id", user.id).eq("year", year).maybeSingle(),
     supabase.from("leave_requests").select("days, start_date").eq("user_id", user.id).eq("status", "approved"),
+    supabase
+      .from("posts")
+      .select("id, title, board_type, reward_points, reward_points_at, created_at")
+      .eq("author_id", user.id)
+      .order("created_at", { ascending: false }),
   ]);
 
   const myPending = (myClaimsRes.data ?? []).filter((c) => c.status === "pending").length;
@@ -40,6 +47,15 @@ export default async function DashboardPage() {
     .filter((r) => r.start_date.startsWith(String(year)))
     .reduce((s, r) => s + Number(r.days), 0);
   const remainingLeave = granted - usedLeave;
+
+  // 내 포인트 (포상 포인트 = 내 글에 부여된 포인트)
+  const myPosts = myPostsRes.data ?? [];
+  const earnedTotal = myPosts.reduce((s, p) => s + (p.reward_points ?? 0), 0);
+  const earnedThisMonth = myPosts
+    .filter((p) => p.reward_points && p.reward_points_at && p.reward_points_at >= monthStart)
+    .reduce((s, p) => s + (p.reward_points ?? 0), 0);
+  const usedPoints = 0; // 향후 복지신청 차감 시 연동
+  const boardName = (t: string) => (t === "free" ? "자유게시판" : "업무공유게시판");
 
   return (
     <div className="space-y-6">
@@ -75,6 +91,45 @@ export default async function DashboardPage() {
           </Card>
         </Link>
       </div>
+
+      <div>
+        <h2 className="mb-3 text-lg font-semibold">내 포인트</h2>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <Card>
+            <CardHeader><CardTitle className="text-base">누적 포인트</CardTitle></CardHeader>
+            <CardContent className="text-3xl font-bold text-primary">{earnedTotal.toLocaleString()}P</CardContent>
+          </Card>
+          <Card>
+            <CardHeader><CardTitle className="text-base">사용 포인트</CardTitle></CardHeader>
+            <CardContent className="text-3xl font-bold">{usedPoints.toLocaleString()}P</CardContent>
+          </Card>
+          <Card>
+            <CardHeader><CardTitle className="text-base">이번달 획득</CardTitle></CardHeader>
+            <CardContent className="text-3xl font-bold">{earnedThisMonth.toLocaleString()}P</CardContent>
+          </Card>
+        </div>
+        <p className="mt-2 text-xs text-muted-foreground">포상 포인트는 업무공유 글에 부여된 포인트입니다. (사용은 향후 복지신청 연동 예정)</p>
+      </div>
+
+      <div>
+        <h2 className="mb-3 text-lg font-semibold">내가 쓴 글</h2>
+        <div className="divide-y rounded-md border">
+          {myPosts.slice(0, 8).map((p) => (
+            <Link key={p.id} href={`/board/${p.id}`} className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-muted/50">
+              <span className="flex items-center gap-2 text-sm">
+                <Badge variant="outline">{boardName(p.board_type)}</Badge>
+                <span className="truncate">{p.title}</span>
+                {p.reward_points ? <Badge>{p.reward_points.toLocaleString()}P</Badge> : null}
+              </span>
+              <span className="shrink-0 text-xs text-muted-foreground">{p.created_at?.slice(0, 10)}</span>
+            </Link>
+          ))}
+          {myPosts.length === 0 && (
+            <p className="px-4 py-3 text-sm text-muted-foreground">작성한 글이 없습니다.</p>
+          )}
+        </div>
+      </div>
+
       <div>
         <h2 className="mb-3 text-lg font-semibold">최근 공지</h2>
         <div className="divide-y rounded-md border">
