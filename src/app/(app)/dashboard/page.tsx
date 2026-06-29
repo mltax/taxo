@@ -26,7 +26,7 @@ export default async function DashboardPage() {
       : Promise.resolve({ count: 0 }),
     supabase
       .from("posts")
-      .select("id, title, created_at")
+      .select("id, title, created_at, users:author_id(name)")
       .eq("is_notice", true)
       .order("created_at", { ascending: false })
       .limit(5),
@@ -133,10 +133,14 @@ export default async function DashboardPage() {
       <div>
         <h2 className="mb-3 text-lg font-semibold">최근 공지</h2>
         <div className="divide-y rounded-md border">
-          {(notices ?? []).map((n) => (
-            <Link key={n.id} href={`/board/${n.id}`} className="flex items-center justify-between px-4 py-3 hover:bg-muted/50">
-              <span className="text-sm">{n.title}</span>
-              <span className="text-xs text-muted-foreground">{n.created_at?.slice(0, 10)}</span>
+          {(notices ?? []).map((n: any) => (
+            <Link key={n.id} href={`/board/${n.id}`} className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-muted/50">
+              <span className="truncate text-sm">{n.title}</span>
+              <span className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
+                <span>{n.users?.name ?? "-"}</span>
+                <span>·</span>
+                <span>{n.created_at?.slice(0, 10)}</span>
+              </span>
             </Link>
           ))}
           {(notices ?? []).length === 0 && (
