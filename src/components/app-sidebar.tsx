@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { navItemsForRole, type Role } from "@/lib/roles";
 import { BrandLogo } from "@/components/brand-logo";
 import { SidebarNav } from "@/components/sidebar-nav";
@@ -32,7 +33,13 @@ export function AppSidebar({ name, role }: { name: string; role: Role }) {
       </div>
 
       <SidebarNav items={items} />
-      <div className="p-3">
+      <div className="space-y-2 p-3">
+        <Link
+          href="/account"
+          className="block rounded-md px-3 py-2 text-sm font-medium text-foreground/80 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+        >
+          내 정보 · 비밀번호 변경
+        </Link>
         <form action="/auth/signout" method="post">
           <Button type="submit" variant="outline" className="w-full">
             로그아웃
