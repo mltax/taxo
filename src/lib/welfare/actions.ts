@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth";
 import { canApprove, canAdmin } from "@/lib/roles";
 import { MAX_ATTACHMENT_BYTES } from "@/lib/welfare/constants";
+import { safeStorageKey } from "@/lib/storage";
 
 /** 직원: 복지 청구 신청 (pending 생성 + 증빙 업로드) */
 export async function submitClaim(formData: FormData) {
@@ -33,7 +34,7 @@ export async function submitClaim(formData: FormData) {
 
   // 증빙 파일 업로드 (선택)
   if (file && file.size > 0) {
-    const path = `${user.id}/${claim.id}/${file.name}`;
+    const path = safeStorageKey(`${user.id}/${claim.id}`, file.name);
     const { error: upErr } = await supabase.storage.from("receipts").upload(path, file);
     if (upErr) throw new Error("증빙 업로드에 실패했습니다.");
     await supabase

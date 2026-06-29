@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth";
 import { canApprove } from "@/lib/roles";
+import { safeStorageKey } from "@/lib/storage";
 
 /** 결재자/관리자: 자료실 글 작성 (+첨부 업로드) */
 export async function createPost(formData: FormData) {
@@ -29,7 +30,7 @@ export async function createPost(formData: FormData) {
   if (error || !post) throw new Error("글 저장에 실패했습니다.");
 
   for (const file of files) {
-    const path = `${post.id}/${file.name}`;
+    const path = safeStorageKey(post.id, file.name);
     const { error: upErr } = await supabase.storage.from("documents").upload(path, file);
     if (upErr) throw new Error(`파일 업로드 실패: ${file.name}`);
     await supabase
