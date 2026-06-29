@@ -16,7 +16,7 @@ export default async function DashboardPage() {
   // 독립 쿼리들을 병렬 실행 (네트워크 왕복 한 번으로 묶음)
   const year = new Date().getFullYear();
   const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
-  const [myClaimsRes, inboxRes, noticesRes, grantRes, leaveUsedRes, myPostsRes] = await Promise.all([
+  const [myClaimsRes, inboxRes, noticesRes, grantRes, leaveUsedRes, myPostsRes, ledgerRes] = await Promise.all([
     supabase.from("welfare_claims").select("status").eq("user_id", user.id),
     isApprover
       ? supabase
@@ -37,6 +37,7 @@ export default async function DashboardPage() {
       .select("id, title, board_type, reward_points, reward_points_at, created_at")
       .eq("author_id", user.id)
       .order("created_at", { ascending: false }),
+    supabase.from("point_ledger").select("points").eq("user_id", user.id),
   ]);
 
   const myPending = (myClaimsRes.data ?? []).filter((c) => c.status === "pending").length;
@@ -48,9 +49,11 @@ export default async function DashboardPage() {
     .reduce((s, r) => s + Number(r.days), 0);
   const remainingLeave = granted - usedLeave;
 
-  // 내 포인트 (포상 포인트 = 내 글에 부여된 포인트)
+  // 내 포인트 (포상 포인트 = 내 글에 부여된 포인트 + 삭제된 글의 적립분)
   const myPosts = myPostsRes.data ?? [];
-  const earnedTotal = myPosts.reduce((s, p) => s + (p.reward_points ?? 0), 0);
+  const ledgerTotal = (ledgerRes.data ?? []).reduce((s, l) => s + (l.points ?? 0), 0);
+  const earnedTotal =
+    myPosts.reduce((s, p) => s + (p.reward_points ?? 0), 0) + ledgerTotal;
   const earnedThisMonth = myPosts
     .filter((p) => p.reward_points && p.reward_points_at && p.reward_points_at >= monthStart)
     .reduce((s, p) => s + (p.reward_points ?? 0), 0);
