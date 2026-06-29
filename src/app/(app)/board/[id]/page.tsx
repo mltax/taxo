@@ -55,7 +55,7 @@ export default async function PostDetailPage({
     (files ?? []).map(async (f) => {
       const { data } = await supabase.storage
         .from("documents")
-        .createSignedUrl(f.file_path, 60);
+        .createSignedUrl(f.file_path, 60, { download: f.file_name });
       return { ...f, url: data?.signedUrl ?? null };
     })
   );

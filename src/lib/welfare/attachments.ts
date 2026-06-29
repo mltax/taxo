@@ -24,7 +24,7 @@ export async function getClaimFiles(
     (atts ?? []).map(async (a) => {
       const { data } = await supabase.storage
         .from("receipts")
-        .createSignedUrl(a.file_path, 60);
+        .createSignedUrl(a.file_path, 60, { download: a.file_name });
       const list = map.get(a.claim_id) ?? [];
       list.push({ name: a.file_name, url: data?.signedUrl ?? null });
       map.set(a.claim_id, list);
