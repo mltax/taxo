@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { canAdmin } from "@/lib/roles";
+import { canAdmin, canEditPost, canDeletePost, type BoardType } from "@/lib/roles";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import {
@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { StarDisplay } from "@/components/star-display";
 import { RateStars } from "./rate-stars";
 import { RewardInput } from "./reward-input";
+import { PostActions } from "./post-actions";
 
 export default async function PostDetailPage({
   params,
@@ -24,12 +25,15 @@ export default async function PostDetailPage({
 
   const { data: post } = await supabase
     .from("posts")
-    .select("id, title, category, body, is_notice, board_type, reward_points, created_at, users:author_id(name)")
+    .select("id, title, category, body, is_notice, board_type, reward_points, author_id, created_at, users:author_id(name)")
     .eq("id", id)
     .single();
   if (!post) notFound();
 
   const backHref = post.board_type === "free" ? "/board/free" : "/board/work";
+  const isAuthor = post.author_id === user.id;
+  const canEdit = canEditPost(user.role, post.board_type as BoardType, isAuthor);
+  const canDelete = canDeletePost(user.role, post.board_type as BoardType, isAuthor);
 
   // 업무공유 글: 평균 별점 + 내 투표 조회
   const isWork = post.board_type === "work";
@@ -64,7 +68,10 @@ export default async function PostDetailPage({
 
   return (
     <div className="space-y-4">
-      <Link href={backHref} className="text-sm text-muted-foreground hover:underline">← 목록</Link>
+      <div className="flex items-center justify-between">
+        <Link href={backHref} className="text-sm text-muted-foreground hover:underline">← 목록</Link>
+        <PostActions postId={post.id} canEdit={canEdit} canDelete={canDelete} />
+      </div>
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">

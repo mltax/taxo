@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { canApprove, canAdmin, navItemsForRole, type Role, type NavItem } from "@/lib/roles";
+import { canApprove, canAdmin, canEditPost, canDeletePost, navItemsForRole, type Role, type NavItem } from "@/lib/roles";
 
 /** 최상위 + 하위 항목 라벨을 모두 평탄화 */
 function allLabels(role: Role): string[] {
@@ -45,6 +45,22 @@ describe("roles", () => {
 
   it("hr_manager can approve", () => {
     expect(canApprove("hr_manager")).toBe(true);
+  });
+
+  it("자유게시판: 글쓴이는 수정·삭제, 관리자는 삭제만, 타인은 불가", () => {
+    expect(canEditPost("staff", "free", true)).toBe(true);   // 글쓴이
+    expect(canEditPost("staff", "free", false)).toBe(false); // 타인
+    expect(canEditPost("admin", "free", false)).toBe(false); // 관리자도 수정 불가(자유)
+    expect(canDeletePost("staff", "free", true)).toBe(true); // 글쓴이 삭제
+    expect(canDeletePost("admin", "free", false)).toBe(true); // 관리자 삭제
+    expect(canDeletePost("approver", "free", false)).toBe(false); // 타인 불가
+  });
+
+  it("업무공유게시판: 관리자만 수정·삭제", () => {
+    expect(canEditPost("admin", "work", false)).toBe(true);
+    expect(canEditPost("approver", "work", true)).toBe(false); // 글쓴이여도 불가
+    expect(canDeletePost("admin", "work", false)).toBe(true);
+    expect(canDeletePost("approver", "work", true)).toBe(false);
   });
 
   it("연차 관리 그룹과 연차 신청 하위가 모두에게 보인다", () => {

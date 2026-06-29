@@ -14,6 +14,20 @@ export function canAdmin(role: Role): boolean {
   return role === "admin";
 }
 
+export type BoardType = "free" | "work";
+
+/** 글 수정 권한: 자유게시판=글쓴이, 업무공유게시판=관리자만 */
+export function canEditPost(role: Role, board: BoardType, isAuthor: boolean): boolean {
+  if (board === "work") return role === "admin";
+  return isAuthor;
+}
+
+/** 글 삭제 권한: 자유게시판=글쓴이 또는 관리자, 업무공유게시판=관리자만 */
+export function canDeletePost(role: Role, board: BoardType, isAuthor: boolean): boolean {
+  if (board === "work") return role === "admin";
+  return isAuthor || role === "admin";
+}
+
 export function navItemsForRole(role: Role): NavItem[] {
   // 한영복지신청 그룹
   const welfareChildren: NavItem[] = [{ label: "복지신청", href: "/welfare" }];
