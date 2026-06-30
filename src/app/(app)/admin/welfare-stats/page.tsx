@@ -1,3 +1,6 @@
+import { redirect } from "next/navigation";
+import { requireUser } from "@/lib/auth";
+import { canAdmin } from "@/lib/roles";
 import { createClient } from "@/lib/supabase/server";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -13,6 +16,8 @@ interface ClaimRow {
 }
 
 export default async function WelfareStatsPage() {
+  const me = await requireUser();
+  if (!canAdmin(me.role)) redirect("/admin/leave");
   const supabase = await createClient();
   const { data } = await supabase
     .from("welfare_claims")

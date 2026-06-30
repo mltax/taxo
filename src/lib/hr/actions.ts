@@ -3,13 +3,19 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth";
-import { canAdmin } from "@/lib/roles";
+import { canAdmin, canManageLeave } from "@/lib/roles";
 import { computeLegalLeave } from "@/lib/leave/calc";
 
 async function assertHR() {
   const user = await requireUser();
-  // 인사 관리는 대표(admin) 전용
+  // 인사(팀·계정) 관리는 대표(admin) 전용
   if (!canAdmin(user.role)) throw new Error("인사 관리 권한이 필요합니다.");
+}
+
+async function assertManageLeave() {
+  const user = await requireUser();
+  // 연차 부여 관리는 인사관리자 + 대표
+  if (!canManageLeave(user.role)) throw new Error("연차 관리 권한이 필요합니다.");
 }
 
 /** 팀 생성 */
@@ -68,21 +74,21 @@ export async function setApprover(userId: string, approverId: string | null) {
   revalidatePath("/admin/teams");
 }
 
-/** 입사일 설정 */
+/** 입사일 설정 (인사관리자/대표 — 정의자 함수로 hire_date만 변경) */
 export async function setHireDate(userId: string, hireDate: string) {
-  await assertHR();
+  await assertManageLeave();
   const supabase = await createClient();
-  const { error } = await supabase
-    .from("users")
-    .update({ hire_date: hireDate || null })
-    .eq("id", userId);
+  const { error } = await supabase.rpc("hr_set_hire_date", {
+    p_user: userId,
+    p_date: hireDate || null,
+  });
   if (error) throw new Error("입사일 설정 실패");
   revalidatePath("/admin/leave");
 }
 
 /** 연차 일괄 산정: 입사일 있는 전 직원에 대해 해당 연도 부여행 생성(없을 때만) */
 export async function generateGrants(year: number) {
-  await assertHR();
+  await assertManageLeave();
   const supabase = await createClient();
   const { data: users } = await supabase
     .from("users")
@@ -112,7 +118,7 @@ export async function generateGrants(year: number) {
 
 /** 개별 부여일수 수정 (upsert) */
 export async function setGrant(userId: string, year: number, days: number) {
-  await assertHR();
+  await assertManageLeave();
   if (days < 0) throw new Error("부여일수는 0 이상이어야 합니다.");
   const supabase = await createClient();
   const { error } = await supabase

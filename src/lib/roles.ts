@@ -14,6 +14,11 @@ export function canAdmin(role: Role): boolean {
   return role === "admin";
 }
 
+/** 연차 부여 관리 권한: 인사관리자 + 대표 */
+export function canManageLeave(role: Role): boolean {
+  return role === "hr_manager" || role === "admin";
+}
+
 export type BoardType = "free" | "work";
 
 /** 글 수정 권한: 자유게시판=글쓴이, 업무공유게시판=관리자만 */
@@ -39,6 +44,9 @@ export function navItemsForRole(role: Role): NavItem[] {
   const leaveChildren: NavItem[] = [{ label: "연차 신청", href: "/leave" }];
   if (canApprove(role)) {
     leaveChildren.push({ label: "연차 승인함", href: "/leave/inbox" });
+  }
+  if (canManageLeave(role)) {
+    leaveChildren.push({ label: "연차 부여 관리", href: "/admin/leave" });
   }
 
   // 업무일지 그룹

@@ -1,3 +1,6 @@
+import { redirect } from "next/navigation";
+import { requireUser } from "@/lib/auth";
+import { canAdmin } from "@/lib/roles";
 import { createClient } from "@/lib/supabase/server";
 import { NewTeam, LeaderSelect, TeamSelect, ApproverSelect } from "./team-forms";
 import {
@@ -8,6 +11,8 @@ import {
 } from "@/components/ui/table";
 
 export default async function TeamsPage() {
+  const me = await requireUser();
+  if (!canAdmin(me.role)) redirect("/admin/leave");
   const supabase = await createClient();
   const [teamsRes, usersRes] = await Promise.all([
     supabase.from("teams").select("id, name, leader_id").order("name"),
