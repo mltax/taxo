@@ -1,3 +1,6 @@
+import { redirect } from "next/navigation";
+import { requireUser } from "@/lib/auth";
+import { canManageLeave } from "@/lib/roles";
 import { createClient } from "@/lib/supabase/server";
 import { GenerateButton, HireDateInput, GrantInput } from "./leave-admin";
 import {
@@ -5,6 +8,8 @@ import {
 } from "@/components/ui/table";
 
 export default async function LeaveAdminPage() {
+  const me = await requireUser();
+  if (!canManageLeave(me.role)) redirect("/dashboard");
   const supabase = await createClient();
   const year = new Date().getFullYear();
 
