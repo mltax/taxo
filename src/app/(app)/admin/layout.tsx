@@ -21,6 +21,7 @@ export default async function AdminLayout({
             <Link href="/admin/teams" className="pb-2 text-sm hover:border-b-2 hover:border-foreground">인사관리</Link>
           )}
           <Link href="/admin/leave" className="pb-2 text-sm hover:border-b-2 hover:border-foreground">연차 관리</Link>
+          <Link href="/admin/leave-status" className="pb-2 text-sm hover:border-b-2 hover:border-foreground">연차 사용 내역</Link>
           {isAdmin && (
             <>
               <Link href="/admin/employees" className="pb-2 text-sm hover:border-b-2 hover:border-foreground">직원/계정</Link>

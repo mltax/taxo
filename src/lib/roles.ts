@@ -47,6 +47,7 @@ export function navItemsForRole(role: Role): NavItem[] {
   }
   if (canManageLeave(role)) {
     leaveChildren.push({ label: "연차 부여 관리", href: "/admin/leave" });
+    leaveChildren.push({ label: "연차 사용 내역", href: "/admin/leave-status" });
   }
 
   // 업무일지 그룹
