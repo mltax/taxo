@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { canApprove } from "@/lib/roles";
+import { getNameMap } from "@/lib/users/directory";
 import { BrandLogo } from "@/components/brand-logo";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -16,7 +17,7 @@ export default async function DashboardPage() {
   // 독립 쿼리들을 병렬 실행 (네트워크 왕복 한 번으로 묶음)
   const year = new Date().getFullYear();
   const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
-  const [myClaimsRes, inboxRes, noticesRes, grantRes, leaveUsedRes, myPostsRes, ledgerRes] = await Promise.all([
+  const [myClaimsRes, inboxRes, noticesRes, grantRes, leaveUsedRes, myPostsRes, ledgerRes, nameMap] = await Promise.all([
     supabase.from("welfare_claims").select("status").eq("user_id", user.id),
     isApprover
       ? supabase
@@ -26,7 +27,7 @@ export default async function DashboardPage() {
       : Promise.resolve({ count: 0 }),
     supabase
       .from("posts")
-      .select("id, title, created_at, users:author_id(name)")
+      .select("id, title, created_at, author_id")
       .eq("is_notice", true)
       .order("created_at", { ascending: false })
       .limit(5),
@@ -38,6 +39,7 @@ export default async function DashboardPage() {
       .eq("author_id", user.id)
       .order("created_at", { ascending: false }),
     supabase.from("point_ledger").select("points").eq("user_id", user.id),
+    getNameMap(supabase),
   ]);
 
   const myPending = (myClaimsRes.data ?? []).filter((c) => c.status === "pending").length;
@@ -140,7 +142,7 @@ export default async function DashboardPage() {
             <Link key={n.id} href={`/board/${n.id}`} className="flex items-center justify-between gap-3 px-4 py-3 hover:bg-muted/50">
               <span className="truncate text-sm">{n.title}</span>
               <span className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
-                <span>{n.users?.name ?? "-"}</span>
+                <span>{nameMap.get(n.author_id) ?? "-"}</span>
                 <span>·</span>
                 <span>{n.created_at?.slice(0, 10)}</span>
               </span>

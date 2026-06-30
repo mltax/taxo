@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { canAdmin, canEditPost, canDeletePost, type BoardType } from "@/lib/roles";
+import { getNameMap } from "@/lib/users/directory";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import {
@@ -23,11 +24,14 @@ export default async function PostDetailPage({
   const user = await requireUser();
   const supabase = await createClient();
 
-  const { data: post } = await supabase
-    .from("posts")
-    .select("id, title, category, body, is_notice, board_type, reward_points, author_id, created_at, users:author_id(name)")
-    .eq("id", id)
-    .single();
+  const [{ data: post }, nameMap] = await Promise.all([
+    supabase
+      .from("posts")
+      .select("id, title, category, body, is_notice, board_type, reward_points, author_id, created_at")
+      .eq("id", id)
+      .single(),
+    getNameMap(supabase),
+  ]);
   if (!post) notFound();
 
   const backHref = post.board_type === "free" ? "/board/free" : "/board/work";
@@ -64,7 +68,7 @@ export default async function PostDetailPage({
     })
   );
 
-  const author = (post as any).users?.name ?? "-";
+  const author = nameMap.get(post.author_id) ?? "-";
 
   return (
     <div className="space-y-4">

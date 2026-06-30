@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { canApprove } from "@/lib/roles";
+import { getNameMap } from "@/lib/users/directory";
 import { LeaveActions } from "./leave-actions";
 import {
   LEAVE_STATUS_LABEL, LEAVE_TYPE_LABEL,
@@ -26,12 +27,15 @@ export default async function LeaveInboxPage() {
   const supabase = await createClient();
 
   // 내가 결재자인 모든 신청을 상태별로(대기 우선) 한 화면에 표시
-  const { data: requests } = await supabase
-    .from("leave_requests")
-    .select("id, start_date, end_date, days, half_day, leave_type, reason, status, reject_reason, users:user_id(name)")
-    .eq("approver_id", user.id)
-    .order("status")
-    .order("created_at", { ascending: false });
+  const [{ data: requests }, nameMap] = await Promise.all([
+    supabase
+      .from("leave_requests")
+      .select("id, start_date, end_date, days, half_day, leave_type, reason, status, reject_reason, user_id")
+      .eq("approver_id", user.id)
+      .order("status")
+      .order("created_at", { ascending: false }),
+    getNameMap(supabase),
+  ]);
 
   const rows = requests ?? [];
   const pendingCount = rows.filter((r) => r.status === "pending").length;
@@ -53,7 +57,7 @@ export default async function LeaveInboxPage() {
         <TableBody>
           {rows.map((r: any) => (
             <TableRow key={r.id}>
-              <TableCell>{r.users?.name ?? "-"}</TableCell>
+              <TableCell>{nameMap.get(r.user_id) ?? "-"}</TableCell>
               <TableCell>
                 {r.start_date}{r.leave_type === "full" && r.end_date !== r.start_date ? ` ~ ${r.end_date}` : ""}
               </TableCell>
