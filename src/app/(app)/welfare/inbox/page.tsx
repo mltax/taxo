@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { canApprove, canAdmin } from "@/lib/roles";
+import { getNameMap } from "@/lib/users/directory";
 import { getClaimFiles } from "@/lib/welfare/attachments";
 import { PendingActions, PayAction } from "./claim-actions";
 import { StatusBadge } from "@/components/status-badge";
@@ -15,18 +16,19 @@ export default async function InboxPage() {
   if (!canApprove(user.role)) redirect("/dashboard");
   const supabase = await createClient();
 
-  // 대기/승인 목록 병렬 조회
-  const [pendingRes, approvedRes] = await Promise.all([
+  // 대기/승인 목록 + 이름 맵 병렬 조회
+  const [pendingRes, approvedRes, nameMap] = await Promise.all([
     supabase
       .from("welfare_claims")
-      .select("id, amount, reason, created_at, users:user_id(name), welfare_items:item_id(name)")
+      .select("id, amount, reason, created_at, user_id, welfare_items:item_id(name)")
       .eq("status", "pending")
       .order("created_at"),
     supabase
       .from("welfare_claims")
-      .select("id, amount, reason, approved_at, users:user_id(name), welfare_items:item_id(name)")
+      .select("id, amount, reason, approved_at, user_id, welfare_items:item_id(name)")
       .eq("status", "approved")
       .order("approved_at"),
+    getNameMap(supabase),
   ]);
   const pending = pendingRes.data ?? [];
   const approved = approvedRes.data ?? [];
@@ -53,7 +55,7 @@ export default async function InboxPage() {
           <TableBody>
             {pending.map((c: any) => (
               <TableRow key={c.id}>
-                <TableCell>{c.users?.name ?? "-"}</TableCell>
+                <TableCell>{nameMap.get(c.user_id) ?? "-"}</TableCell>
                 <TableCell>{c.welfare_items?.name ?? "-"}</TableCell>
                 <TableCell>{c.amount?.toLocaleString()}원</TableCell>
                 <TableCell>{c.reason}</TableCell>
@@ -83,7 +85,7 @@ export default async function InboxPage() {
           <TableBody>
             {approved.map((c: any) => (
               <TableRow key={c.id}>
-                <TableCell>{c.users?.name ?? "-"}</TableCell>
+                <TableCell>{nameMap.get(c.user_id) ?? "-"}</TableCell>
                 <TableCell>{c.welfare_items?.name ?? "-"}</TableCell>
                 <TableCell>{c.amount?.toLocaleString()}원</TableCell>
                 <TableCell><FileLinks files={filesByClaim.get(c.id)} /></TableCell>

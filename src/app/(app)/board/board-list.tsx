@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { canApprove } from "@/lib/roles";
+import { getNameMap } from "@/lib/users/directory";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { StarDisplay } from "@/components/star-display";
@@ -20,12 +21,15 @@ export async function BoardList({
   const supabase = await createClient();
   const isWork = boardType === "work";
 
-  const { data: posts } = await supabase
-    .from("posts")
-    .select("id, title, category, is_notice, created_at, users:author_id(name)")
-    .eq("board_type", boardType)
-    .order("is_notice", { ascending: false })
-    .order("created_at", { ascending: false });
+  const [{ data: posts }, nameMap] = await Promise.all([
+    supabase
+      .from("posts")
+      .select("id, title, category, is_notice, created_at, author_id")
+      .eq("board_type", boardType)
+      .order("is_notice", { ascending: false })
+      .order("created_at", { ascending: false }),
+    getNameMap(supabase),
+  ]);
 
   // 업무공유: 글별 평균 별점
   const ratingByPost = new Map<string, { avg: number; count: number }>();
@@ -69,7 +73,7 @@ export async function BoardList({
                 {isWork && (
                   <TableCell><StarDisplay avg={r?.avg ?? 0} count={r?.count ?? 0} /></TableCell>
                 )}
-                <TableCell>{p.users?.name ?? "-"}</TableCell>
+                <TableCell>{nameMap.get(p.author_id) ?? "-"}</TableCell>
                 <TableCell>{p.created_at?.slice(0, 10)}</TableCell>
               </TableRow>
             );
