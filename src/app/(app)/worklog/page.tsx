@@ -1,8 +1,10 @@
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { WorkLogForm } from "./worklog-form";
+import { getWorkLogFiles } from "@/lib/worklog/attachments";
 import { WORKLOG_STATUS_LABEL, type WorkLogStatus } from "@/lib/worklog/types";
 import { Badge } from "@/components/ui/badge";
+import { FileLinks } from "@/components/file-links";
 import {
   Card, CardContent, CardHeader, CardTitle,
 } from "@/components/ui/card";
@@ -37,6 +39,7 @@ export default async function WorkLogPage() {
   const nameById = new Map(directory.map((u) => [u.id, u.name]));
   const defaultApproverId = meRes.data?.approver_id ?? "";
   const logs = logsRes.data ?? [];
+  const filesByLog = await getWorkLogFiles(supabase, logs.map((l) => l.id));
 
   return (
     <div className="space-y-8">
@@ -56,7 +59,7 @@ export default async function WorkLogPage() {
           <TableHeader>
             <TableRow>
               <TableHead>날짜</TableHead><TableHead>제목/내용</TableHead>
-              <TableHead>결재자</TableHead><TableHead>상태</TableHead>
+              <TableHead>첨부</TableHead><TableHead>결재자</TableHead><TableHead>상태</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -70,6 +73,7 @@ export default async function WorkLogPage() {
                     <div className="mt-1 text-xs text-destructive">반려: {l.reject_reason}</div>
                   )}
                 </TableCell>
+                <TableCell className="align-top"><FileLinks files={filesByLog.get(l.id)} /></TableCell>
                 <TableCell className="align-top">{nameById.get(l.approver_id) ?? "-"}</TableCell>
                 <TableCell className="align-top">
                   <Badge variant={STATUS_VARIANT[l.status as WorkLogStatus]}>{WORKLOG_STATUS_LABEL[l.status as WorkLogStatus]}</Badge>
@@ -77,7 +81,7 @@ export default async function WorkLogPage() {
               </TableRow>
             ))}
             {logs.length === 0 && (
-              <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground">작성한 업무일지가 없습니다.</TableCell></TableRow>
+              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground">작성한 업무일지가 없습니다.</TableCell></TableRow>
             )}
           </TableBody>
         </Table>

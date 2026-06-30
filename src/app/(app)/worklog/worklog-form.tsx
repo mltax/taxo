@@ -66,6 +66,10 @@ export function WorkLogForm({
           ))}
         </select>
       </div>
+      <div className="space-y-2">
+        <Label htmlFor="files">첨부 파일 (여러 개 가능)</Label>
+        <Input id="files" name="files" type="file" multiple />
+      </div>
       {error && <p className="text-sm text-destructive">{error}</p>}
       <Button type="submit" disabled={pending}>{pending ? "제출 중..." : "업무일지 제출"}</Button>
     </form>

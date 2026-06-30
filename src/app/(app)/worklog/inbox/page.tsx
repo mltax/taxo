@@ -3,8 +3,10 @@ import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { canApprove } from "@/lib/roles";
 import { WorkLogActions } from "./worklog-actions";
+import { getWorkLogFiles } from "@/lib/worklog/attachments";
 import { WORKLOG_STATUS_LABEL, type WorkLogStatus } from "@/lib/worklog/types";
 import { Badge } from "@/components/ui/badge";
+import { FileLinks } from "@/components/file-links";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
@@ -33,6 +35,7 @@ export default async function WorkLogInboxPage() {
   const nameById = new Map(((dirRes.data ?? []) as { id: string; name: string }[]).map((u) => [u.id, u.name]));
   const logs = logsRes.data ?? [];
   const pendingCount = logs.filter((l) => l.status === "pending").length;
+  const filesByLog = await getWorkLogFiles(supabase, logs.map((l) => l.id));
 
   return (
     <div>
@@ -44,7 +47,8 @@ export default async function WorkLogInboxPage() {
         <TableHeader>
           <TableRow>
             <TableHead>날짜</TableHead><TableHead>작성자</TableHead>
-            <TableHead>제목/내용</TableHead><TableHead>상태</TableHead><TableHead>처리</TableHead>
+            <TableHead>제목/내용</TableHead><TableHead>첨부</TableHead>
+            <TableHead>상태</TableHead><TableHead>처리</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -56,6 +60,7 @@ export default async function WorkLogInboxPage() {
                 {l.title && <div className="font-medium">{l.title}</div>}
                 <div className="whitespace-pre-wrap text-sm text-muted-foreground">{l.content}</div>
               </TableCell>
+              <TableCell className="align-top"><FileLinks files={filesByLog.get(l.id)} /></TableCell>
               <TableCell className="align-top">
                 <Badge variant={STATUS_VARIANT[l.status as WorkLogStatus]}>{WORKLOG_STATUS_LABEL[l.status as WorkLogStatus]}</Badge>
               </TableCell>
@@ -65,7 +70,7 @@ export default async function WorkLogInboxPage() {
             </TableRow>
           ))}
           {logs.length === 0 && (
-            <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground">승인할 업무일지가 없습니다.</TableCell></TableRow>
+            <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground">승인할 업무일지가 없습니다.</TableCell></TableRow>
           )}
         </TableBody>
       </Table>
