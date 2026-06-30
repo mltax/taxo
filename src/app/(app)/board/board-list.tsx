@@ -28,7 +28,7 @@ export async function BoardList({
       .eq("board_type", boardType)
       .order("is_notice", { ascending: false })
       .order("created_at", { ascending: false }),
-    getNameMap(supabase),
+    getNameMap(),
   ]);
 
   // 업무공유: 글별 평균 별점

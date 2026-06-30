@@ -40,7 +40,7 @@ export default async function DashboardPage() {
       .eq("author_id", user.id)
       .order("created_at", { ascending: false }),
     supabase.from("point_ledger").select("points").eq("user_id", user.id),
-    getNameMap(supabase),
+    getNameMap(),
   ]);
 
   const myPending = (myClaimsRes.data ?? []).filter((c) => c.status === "pending").length;

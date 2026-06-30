@@ -433,29 +433,31 @@ export const QUOTES: Quote[] = [
   { text: "별처럼 빛나려면 먼저 어둠을 견뎌야 한다.", author: "서양 격언" },
 ];
 
+// Intl 포매터는 생성 비용이 있어 모듈 로드 시 1회만 만든다(요청마다 재생성 방지).
+const YMD_FMT = new Intl.DateTimeFormat("en-CA", {
+  timeZone: "Asia/Seoul",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+const LABEL_FMT = new Intl.DateTimeFormat("ko-KR", {
+  timeZone: "Asia/Seoul",
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+  weekday: "long",
+});
+
 /** KST 기준 연중 일수(1~366)와 표시용 라벨 */
 export function kstDate(now: Date = new Date()): {
   label: string;
   dayOfYear: number;
 } {
-  const ymd = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Seoul",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(now);
-  const [y, m, d] = ymd.split("-").map(Number);
+  const [y, m, d] = YMD_FMT.format(now).split("-").map(Number);
   const dayOfYear = Math.floor(
     (Date.UTC(y, m - 1, d) - Date.UTC(y, 0, 0)) / 86400000
   );
-  const label = new Intl.DateTimeFormat("ko-KR", {
-    timeZone: "Asia/Seoul",
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    weekday: "long",
-  }).format(now);
-  return { label, dayOfYear };
+  return { label: LABEL_FMT.format(now), dayOfYear };
 }
 
 /**

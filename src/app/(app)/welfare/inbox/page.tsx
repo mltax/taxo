@@ -28,7 +28,7 @@ export default async function InboxPage() {
       .select("id, amount, reason, approved_at, user_id, welfare_items:item_id(name)")
       .eq("status", "approved")
       .order("approved_at"),
-    getNameMap(supabase),
+    getNameMap(),
   ]);
   const pending = pendingRes.data ?? [];
   const approved = approvedRes.data ?? [];
