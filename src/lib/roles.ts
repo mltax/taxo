@@ -41,6 +41,12 @@ export function navItemsForRole(role: Role): NavItem[] {
     leaveChildren.push({ label: "연차 승인함", href: "/leave/inbox" });
   }
 
+  // 업무일지 그룹
+  const worklogChildren: NavItem[] = [{ label: "업무일지 작성", href: "/worklog" }];
+  if (canApprove(role)) {
+    worklogChildren.push({ label: "업무일지 승인함", href: "/worklog/inbox" });
+  }
+
   const items: NavItem[] = [
     { label: "홈", href: "/dashboard" },
     { label: "한영복지신청", children: welfareChildren },
@@ -52,6 +58,7 @@ export function navItemsForRole(role: Role): NavItem[] {
       ],
     },
     { label: "연차 관리", children: leaveChildren },
+    { label: "업무일지", children: worklogChildren },
   ];
   if (canAdmin(role)) {
     // 관리자(인사·연차·계정·복지항목) 영역은 대표(admin) 전용
