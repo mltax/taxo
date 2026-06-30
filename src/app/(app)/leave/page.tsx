@@ -29,7 +29,7 @@ export default async function LeavePage() {
       .maybeSingle(),
     supabase
       .from("leave_requests")
-      .select("id, start_date, end_date, days, half_day, leave_type, status, reason, reject_reason, created_at")
+      .select("id, start_date, end_date, days, half_day, leave_type, status, reason, reject_reason, created_at, stage, next_approver_id")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false }),
   ]);
@@ -80,7 +80,14 @@ export default async function LeavePage() {
                     <span className="block text-xs text-destructive">반려: {r.reject_reason}</span>
                   )}
                 </TableCell>
-                <TableCell><Badge variant={r.status === "rejected" ? "destructive" : r.status === "approved" ? "default" : "secondary"}>{LEAVE_STATUS_LABEL[r.status as LeaveStatus]}</Badge></TableCell>
+                <TableCell>
+                  <Badge variant={r.status === "rejected" ? "destructive" : r.status === "approved" ? "default" : "secondary"}>{LEAVE_STATUS_LABEL[r.status as LeaveStatus]}</Badge>
+                  {r.status === "pending" && (
+                    <span className="mt-1 block text-xs text-muted-foreground">
+                      {r.stage === 2 ? "1차 승인 · 인사관리자 대기" : r.next_approver_id ? "팀장 결재 대기" : "결재 대기"}
+                    </span>
+                  )}
+                </TableCell>
                 <TableCell>
                   {r.status === "pending" && <WithdrawLeaveButton id={r.id} />}
                 </TableCell>

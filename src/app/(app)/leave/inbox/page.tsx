@@ -30,7 +30,7 @@ export default async function LeaveInboxPage() {
   const [{ data: requests }, nameMap] = await Promise.all([
     supabase
       .from("leave_requests")
-      .select("id, start_date, end_date, days, half_day, leave_type, reason, status, reject_reason, user_id")
+      .select("id, start_date, end_date, days, half_day, leave_type, reason, status, reject_reason, user_id, stage, step1_approver_id")
       .eq("approver_id", user.id)
       .order("status")
       .order("created_at", { ascending: false }),
@@ -73,6 +73,13 @@ export default async function LeaveInboxPage() {
                 <Badge variant={STATUS_VARIANT[r.status as LeaveStatus]}>
                   {LEAVE_STATUS_LABEL[r.status as LeaveStatus]}
                 </Badge>
+                {r.status === "pending" && (
+                  <span className="mt-1 block text-xs text-muted-foreground">
+                    {r.stage === 2
+                      ? `2차 결재 (1차: ${nameMap.get(r.step1_approver_id) ?? "-"} 승인)`
+                      : "1차 결재"}
+                  </span>
+                )}
               </TableCell>
               <TableCell>
                 {r.status === "pending" ? (
