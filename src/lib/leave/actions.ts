@@ -19,15 +19,13 @@ export async function submitLeave(formData: FormData) {
   if (!start) throw new Error("시작일을 선택하세요.");
   if (new Date(end) < new Date(start)) throw new Error("종료일이 시작일보다 빠릅니다.");
 
-  // 직속 결재자 확인
+  // 직속 결재자 확인 (없으면 본인 결재 — 대표 등 최상위)
   const { data: me } = await supabase
     .from("users")
     .select("approver_id")
     .eq("id", user.id)
     .single();
-  if (!me?.approver_id) {
-    throw new Error("직속 결재자가 지정되지 않았습니다. 관리자에게 문의하세요.");
-  }
+  const approverId = me?.approver_id ?? user.id;
 
   const days = countLeaveDays(start, end, halfDay);
   if (days <= 0) throw new Error("신청 일수가 0일입니다. 평일을 선택하세요.");
@@ -39,7 +37,7 @@ export async function submitLeave(formData: FormData) {
     days,
     half_day: halfDay,
     reason,
-    approver_id: me.approver_id,
+    approver_id: approverId,
   });
   if (error) throw new Error("신청 저장에 실패했습니다.");
   revalidatePath("/leave");
