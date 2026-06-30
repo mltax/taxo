@@ -12,12 +12,6 @@ interface Approver {
   role: string;
 }
 
-const ROLE_LABEL: Record<string, string> = {
-  approver: "팀장",
-  hr_manager: "인사관리자",
-  admin: "대표",
-};
-
 export function WorkLogForm({
   approvers,
   defaultApproverId,
@@ -62,7 +56,7 @@ export function WorkLogForm({
         <select id="approver_id" name="approver_id" defaultValue={defaultApproverId} required className="w-full rounded-md border px-3 py-2 text-sm">
           <option value="">선택하세요</option>
           {approvers.map((a) => (
-            <option key={a.id} value={a.id}>{a.name} ({ROLE_LABEL[a.role] ?? a.role})</option>
+            <option key={a.id} value={a.id}>{a.name}</option>
           ))}
         </select>
       </div>
