@@ -29,7 +29,7 @@ export const LEAVE_TYPE_LABEL: Record<LeaveType, string> = {
 export const LEAVE_TYPE_DESC: Record<LeaveType, string> = {
   full: "종일 (8시간 = 1일)",
   half_am: "오전반차 (09:00~13:30, 0.5일)",
-  half_pm: "오후반차 (12:30~18:00, 0.5일)",
+  half_pm: "오후반차 (13:30~18:00, 0.5일)",
   hourly_1: "1시간 시차 (0.125일)",
   hourly_2: "2시간 시차 (0.25일)",
   hourly_3: "3시간 시차 (0.375일)",
