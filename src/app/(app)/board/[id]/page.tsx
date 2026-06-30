@@ -30,7 +30,7 @@ export default async function PostDetailPage({
       .select("id, title, category, body, is_notice, board_type, reward_points, author_id, created_at")
       .eq("id", id)
       .single(),
-    getNameMap(supabase),
+    getNameMap(),
   ]);
   if (!post) notFound();
 

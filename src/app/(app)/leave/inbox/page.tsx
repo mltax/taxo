@@ -34,7 +34,7 @@ export default async function LeaveInboxPage() {
       .eq("approver_id", user.id)
       .order("status")
       .order("created_at", { ascending: false }),
-    getNameMap(supabase),
+    getNameMap(),
   ]);
 
   const rows = requests ?? [];
