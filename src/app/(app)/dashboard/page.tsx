@@ -3,6 +3,7 @@ import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { canApprove } from "@/lib/roles";
 import { getNameMap } from "@/lib/users/directory";
+import { dailyQuote, kstDate } from "@/lib/quotes";
 import { BrandLogo } from "@/components/brand-logo";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -61,17 +62,41 @@ export default async function DashboardPage() {
     .reduce((s, p) => s + (p.reward_points ?? 0), 0);
   const usedPoints = 0; // 향후 복지신청 차감 시 연동
   const boardName = (t: string) => (t === "free" ? "자유게시판" : "업무공유게시판");
+  const today = kstDate();
+  const quote = dailyQuote();
 
   return (
     <div className="space-y-6">
       <div className="bg-cosmic relative overflow-hidden rounded-2xl px-6 py-7 text-white shadow-lg">
         <div className="bg-stars pointer-events-none absolute inset-0 opacity-70" />
-        <div className="absolute right-6 top-1/2 hidden -translate-y-1/2 place-items-center rounded-2xl bg-white/95 p-3 shadow-lg sm:grid">
-          <BrandLogo className="h-12 w-12" />
-        </div>
-        <div className="relative">
-          <h1 className="text-2xl font-bold">안녕하세요, {user.name} 님</h1>
-          <p className="mt-1 text-slate-200">세무법인 한영(창원) 사내 시스템에 오신 것을 환영합니다.</p>
+        <div className="relative flex flex-col gap-5 md:flex-row md:items-stretch md:gap-6">
+          {/* 좌측: 인사 */}
+          <div className="flex items-start gap-3 md:w-1/2">
+            <div className="hidden shrink-0 place-items-center rounded-2xl bg-white/95 p-2.5 shadow-lg sm:grid">
+              <BrandLogo className="h-11 w-11" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold">안녕하세요, {user.name} 님</h1>
+              <p className="mt-1 text-slate-200">세무법인 한영(창원) 사내 시스템에 오신 것을 환영합니다.</p>
+            </div>
+          </div>
+          {/* 우측: 전광판 — 날짜·환영문구·오늘의 한 문장 */}
+          <div className="rounded-xl bg-white/10 p-4 ring-1 ring-white/15 backdrop-blur-sm md:w-1/2">
+            <div className="flex items-center gap-2 text-xs font-medium tracking-wide text-slate-200">
+              <span className="relative flex h-2 w-2" aria-hidden>
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-50" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+              </span>
+              <span className="tabular-nums">{today.label}</span>
+            </div>
+            <p className="mt-2 text-sm text-slate-100">
+              환영합니다, <span className="font-semibold text-white">{user.name}</span> 님 · 행복한 하루 되세요
+            </p>
+            <figure className="mt-3 border-t border-white/15 pt-3">
+              <blockquote className="text-sm italic leading-relaxed text-slate-100">“{quote.text}”</blockquote>
+              <figcaption className="mt-1 text-right text-xs text-slate-300">— {quote.author}</figcaption>
+            </figure>
+          </div>
         </div>
       </div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
