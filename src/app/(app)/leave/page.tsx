@@ -2,7 +2,11 @@ import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { LeaveForm } from "./leave-form";
 import { WithdrawLeaveButton } from "./withdraw-button";
-import { LEAVE_STATUS_LABEL, type LeaveStatus } from "@/lib/leave/types";
+import {
+  LEAVE_STATUS_LABEL, LEAVE_TYPE_LABEL,
+  type LeaveStatus, type LeaveType,
+} from "@/lib/leave/types";
+import { formatDays } from "@/lib/leave/calc";
 import { Badge } from "@/components/ui/badge";
 import {
   Card, CardContent, CardHeader, CardTitle,
@@ -25,7 +29,7 @@ export default async function LeavePage() {
       .maybeSingle(),
     supabase
       .from("leave_requests")
-      .select("id, start_date, end_date, days, half_day, status, reason, reject_reason, created_at")
+      .select("id, start_date, end_date, days, half_day, leave_type, status, reason, reject_reason, created_at")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false }),
   ]);
@@ -42,9 +46,9 @@ export default async function LeavePage() {
       <div>
         <h1 className="mb-4 text-2xl font-bold">연차</h1>
         <div className="mb-6 grid gap-4 sm:grid-cols-3">
-          <Card><CardHeader><CardTitle className="text-sm">{year}년 부여</CardTitle></CardHeader><CardContent className="text-2xl font-bold">{granted}일</CardContent></Card>
-          <Card><CardHeader><CardTitle className="text-sm">사용</CardTitle></CardHeader><CardContent className="text-2xl font-bold">{used}일</CardContent></Card>
-          <Card><CardHeader><CardTitle className="text-sm">잔여</CardTitle></CardHeader><CardContent className="text-2xl font-bold text-primary">{remaining}일</CardContent></Card>
+          <Card><CardHeader><CardTitle className="text-sm">{year}년 부여</CardTitle></CardHeader><CardContent className="text-2xl font-bold">{formatDays(granted)}</CardContent></Card>
+          <Card><CardHeader><CardTitle className="text-sm">사용</CardTitle></CardHeader><CardContent className="text-2xl font-bold">{formatDays(used)}</CardContent></Card>
+          <Card><CardHeader><CardTitle className="text-sm">잔여</CardTitle></CardHeader><CardContent className="text-2xl font-bold text-primary">{formatDays(remaining)}</CardContent></Card>
         </div>
         <Card>
           <CardHeader><CardTitle>연차 신청</CardTitle></CardHeader>
@@ -57,7 +61,7 @@ export default async function LeavePage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>기간</TableHead><TableHead>일수</TableHead>
+              <TableHead>기간</TableHead><TableHead>종류</TableHead><TableHead>일수</TableHead>
               <TableHead>사유</TableHead><TableHead>상태</TableHead>
               <TableHead>관리</TableHead>
             </TableRow>
@@ -66,10 +70,10 @@ export default async function LeavePage() {
             {requests.map((r) => (
               <TableRow key={r.id}>
                 <TableCell>
-                  {r.start_date}{!r.half_day && r.end_date !== r.start_date ? ` ~ ${r.end_date}` : ""}
-                  {r.half_day ? " (반차)" : ""}
+                  {r.start_date}{r.leave_type === "full" && r.end_date !== r.start_date ? ` ~ ${r.end_date}` : ""}
                 </TableCell>
-                <TableCell>{Number(r.days)}일</TableCell>
+                <TableCell>{LEAVE_TYPE_LABEL[r.leave_type as LeaveType]}</TableCell>
+                <TableCell>{formatDays(Number(r.days))}</TableCell>
                 <TableCell>
                   {r.reason}
                   {r.status === "rejected" && r.reject_reason && (
@@ -83,7 +87,7 @@ export default async function LeavePage() {
               </TableRow>
             ))}
             {requests.length === 0 && (
-              <TableRow><TableCell colSpan={5} className="text-center text-muted-foreground">신청 내역이 없습니다.</TableCell></TableRow>
+              <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground">신청 내역이 없습니다.</TableCell></TableRow>
             )}
           </TableBody>
         </Table>

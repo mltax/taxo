@@ -3,7 +3,11 @@ import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { canApprove } from "@/lib/roles";
 import { LeaveActions } from "./leave-actions";
-import { LEAVE_STATUS_LABEL, type LeaveStatus } from "@/lib/leave/types";
+import {
+  LEAVE_STATUS_LABEL, LEAVE_TYPE_LABEL,
+  type LeaveStatus, type LeaveType,
+} from "@/lib/leave/types";
+import { formatDays } from "@/lib/leave/calc";
 import { Badge } from "@/components/ui/badge";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -24,7 +28,7 @@ export default async function LeaveInboxPage() {
   // 내가 결재자인 모든 신청을 상태별로(대기 우선) 한 화면에 표시
   const { data: requests } = await supabase
     .from("leave_requests")
-    .select("id, start_date, end_date, days, half_day, reason, status, reject_reason, users:user_id(name)")
+    .select("id, start_date, end_date, days, half_day, leave_type, reason, status, reject_reason, users:user_id(name)")
     .eq("approver_id", user.id)
     .order("status")
     .order("created_at", { ascending: false });
@@ -42,7 +46,7 @@ export default async function LeaveInboxPage() {
         <TableHeader>
           <TableRow>
             <TableHead>신청자</TableHead><TableHead>기간</TableHead>
-            <TableHead>일수</TableHead><TableHead>사유</TableHead>
+            <TableHead>종류</TableHead><TableHead>일수</TableHead><TableHead>사유</TableHead>
             <TableHead>상태</TableHead><TableHead>처리</TableHead>
           </TableRow>
         </TableHeader>
@@ -51,10 +55,10 @@ export default async function LeaveInboxPage() {
             <TableRow key={r.id}>
               <TableCell>{r.users?.name ?? "-"}</TableCell>
               <TableCell>
-                {r.start_date}{!r.half_day && r.end_date !== r.start_date ? ` ~ ${r.end_date}` : ""}
-                {r.half_day ? " (반차)" : ""}
+                {r.start_date}{r.leave_type === "full" && r.end_date !== r.start_date ? ` ~ ${r.end_date}` : ""}
               </TableCell>
-              <TableCell>{Number(r.days)}일</TableCell>
+              <TableCell>{LEAVE_TYPE_LABEL[r.leave_type as LeaveType]}</TableCell>
+              <TableCell>{formatDays(Number(r.days))}</TableCell>
               <TableCell>
                 {r.reason}
                 {r.status === "rejected" && r.reject_reason && (
@@ -76,7 +80,7 @@ export default async function LeaveInboxPage() {
             </TableRow>
           ))}
           {rows.length === 0 && (
-            <TableRow><TableCell colSpan={6} className="text-center text-muted-foreground">신청 내역이 없습니다.</TableCell></TableRow>
+            <TableRow><TableCell colSpan={7} className="text-center text-muted-foreground">신청 내역이 없습니다.</TableCell></TableRow>
           )}
         </TableBody>
       </Table>

@@ -16,9 +16,26 @@ export function computeLegalLeave(hireDate: string, targetYear: number): number 
   return Math.min(25, 15 + Math.floor((years - 1) / 2));
 }
 
-/** 연차 사용 일수. 반차면 0.5, 아니면 start~end 평일(월~금) 수. */
-export function countLeaveDays(start: string, end: string, halfDay: boolean): number {
-  if (halfDay) return 0.5;
+import type { LeaveType } from "@/lib/leave/types";
+
+const HOURS_PER_DAY = 8;
+
+/** 연차 종류별 차감 시간 (종일 제외) */
+const LEAVE_TYPE_HOURS: Record<Exclude<LeaveType, "full">, number> = {
+  half_am: 4,
+  half_pm: 4,
+  hourly_1: 1,
+  hourly_2: 2,
+  hourly_3: 3,
+};
+
+/**
+ * 연차 사용 일수 (1일=8시간 기준).
+ * - 종일: start~end 평일(월~금) 수 × 1일
+ * - 반차: 0.5일 / 시차: 시간/8일
+ */
+export function countLeaveDays(start: string, end: string, type: LeaveType): number {
+  if (type !== "full") return LEAVE_TYPE_HOURS[type] / HOURS_PER_DAY;
   const s = new Date(start + "T00:00:00Z");
   const e = new Date(end + "T00:00:00Z");
   let count = 0;
@@ -27,4 +44,18 @@ export function countLeaveDays(start: string, end: string, halfDay: boolean): nu
     if (day !== 0 && day !== 6) count++;
   }
   return count;
+}
+
+/** 분수(소수) 일수를 보기 좋게 표기. 예: 1 → "1일", 0.375 → "0.375일" */
+export function formatDays(days: number): string {
+  const n = Number(days);
+  const text = Number.isInteger(n)
+    ? String(n)
+    : n.toFixed(3).replace(/0+$/, "").replace(/\.$/, "");
+  return `${text}일`;
+}
+
+/** 일수를 시간으로 환산 표기. 예: 0.375 → "3시간" */
+export function formatHours(days: number): string {
+  return `${Number(days) * HOURS_PER_DAY}시간`;
 }

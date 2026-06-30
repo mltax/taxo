@@ -5,11 +5,18 @@ import { submitLeave } from "@/lib/leave/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  LEAVE_TYPES,
+  LEAVE_TYPE_DESC,
+  isSingleDayType,
+  type LeaveType,
+} from "@/lib/leave/types";
 
 export function LeaveForm() {
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
-  const [halfDay, setHalfDay] = useState(false);
+  const [leaveType, setLeaveType] = useState<LeaveType>("full");
+  const single = isSingleDayType(leaveType);
 
   async function action(formData: FormData) {
     setError(null);
@@ -17,7 +24,7 @@ export function LeaveForm() {
     try {
       await submitLeave(formData);
       (document.getElementById("leave-form") as HTMLFormElement)?.reset();
-      setHalfDay(false);
+      setLeaveType("full");
     } catch (e) {
       setError(e instanceof Error ? e.message : "오류가 발생했습니다.");
     } finally {
@@ -27,22 +34,25 @@ export function LeaveForm() {
 
   return (
     <form id="leave-form" action={action} className="space-y-4 max-w-md">
-      <div className="flex items-center gap-2">
-        <input
-          id="half_day"
-          name="half_day"
-          type="checkbox"
-          className="h-4 w-4"
-          checked={halfDay}
-          onChange={(e) => setHalfDay(e.target.checked)}
-        />
-        <Label htmlFor="half_day">반차 (0.5일)</Label>
+      <div className="space-y-2">
+        <Label htmlFor="leave_type">종류</Label>
+        <select
+          id="leave_type"
+          name="leave_type"
+          value={leaveType}
+          onChange={(e) => setLeaveType(e.target.value as LeaveType)}
+          className="w-full rounded-md border px-3 py-2 text-sm"
+        >
+          {LEAVE_TYPES.map((t) => (
+            <option key={t} value={t}>{LEAVE_TYPE_DESC[t]}</option>
+          ))}
+        </select>
       </div>
       <div className="space-y-2">
-        <Label htmlFor="start_date">{halfDay ? "날짜" : "시작일"}</Label>
+        <Label htmlFor="start_date">{single ? "날짜" : "시작일"}</Label>
         <Input id="start_date" name="start_date" type="date" required />
       </div>
-      {!halfDay && (
+      {!single && (
         <div className="space-y-2">
           <Label htmlFor="end_date">종료일</Label>
           <Input id="end_date" name="end_date" type="date" required />

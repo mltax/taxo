@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { canManageLeave } from "@/lib/roles";
 import { createClient } from "@/lib/supabase/server";
+import { formatDays } from "@/lib/leave/calc";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
@@ -65,11 +66,11 @@ export default async function LeaveStatusPage() {
           {rows.map((r) => (
             <TableRow key={r.id}>
               <TableCell className="font-medium">{r.name}</TableCell>
-              <TableCell className="text-right">{r.granted}일</TableCell>
-              <TableCell className="text-right">{r.used}일</TableCell>
-              <TableCell className="text-right text-muted-foreground">{r.pending}일</TableCell>
+              <TableCell className="text-right">{formatDays(r.granted)}</TableCell>
+              <TableCell className="text-right">{formatDays(r.used)}</TableCell>
+              <TableCell className="text-right text-muted-foreground">{formatDays(r.pending)}</TableCell>
               <TableCell className={`text-right font-semibold ${r.remaining < 0 ? "text-destructive" : "text-primary"}`}>
-                {r.remaining}일
+                {formatDays(r.remaining)}
               </TableCell>
             </TableRow>
           ))}
