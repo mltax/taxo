@@ -11,6 +11,18 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 
+// Supabase는 to-one 조인(welfare_items:item_id)을 배열로 추론하지만
+// 런타임에는 단일 객체가 반환된다. 조회 결과 형태를 명시한다.
+interface ClaimRow {
+  id: string;
+  amount: number | null;
+  reason: string | null;
+  created_at?: string | null;
+  approved_at?: string | null;
+  user_id: string;
+  welfare_items: { name: string } | null;
+}
+
 export default async function InboxPage() {
   const user = await requireUser();
   if (!canApprove(user.role)) redirect("/dashboard");
@@ -30,8 +42,8 @@ export default async function InboxPage() {
       .order("approved_at"),
     getNameMap(),
   ]);
-  const pending = pendingRes.data ?? [];
-  const approved = approvedRes.data ?? [];
+  const pending = (pendingRes.data ?? []) as unknown as ClaimRow[];
+  const approved = (approvedRes.data ?? []) as unknown as ClaimRow[];
 
   // 증빙 첨부(서명 URL) — 결재자가 확인·다운로드
   const filesByClaim = await getClaimFiles(
@@ -53,7 +65,7 @@ export default async function InboxPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {pending.map((c: any) => (
+            {pending.map((c) => (
               <TableRow key={c.id}>
                 <TableCell>{nameMap.get(c.user_id) ?? "-"}</TableCell>
                 <TableCell>{c.welfare_items?.name ?? "-"}</TableCell>
@@ -83,7 +95,7 @@ export default async function InboxPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {approved.map((c: any) => (
+            {approved.map((c) => (
               <TableRow key={c.id}>
                 <TableCell>{nameMap.get(c.user_id) ?? "-"}</TableCell>
                 <TableCell>{c.welfare_items?.name ?? "-"}</TableCell>

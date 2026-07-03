@@ -10,6 +10,8 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 
+type RatingSummary = { post_id: string; avg_score: number; vote_count: number };
+
 export async function BoardList({
   boardType,
   title,
@@ -35,7 +37,8 @@ export async function BoardList({
   const ratingByPost = new Map<string, { avg: number; count: number }>();
   if (isWork) {
     const { data: summaries } = await supabase.rpc("work_post_rating_summaries");
-    for (const s of (summaries ?? []) as any[]) {
+    const summaryRows = (summaries ?? []) as RatingSummary[];
+    for (const s of summaryRows) {
       ratingByPost.set(s.post_id, { avg: Number(s.avg_score), count: Number(s.vote_count) });
     }
   }
@@ -59,7 +62,7 @@ export async function BoardList({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {(posts ?? []).map((p: any) => {
+          {(posts ?? []).map((p) => {
             const r = ratingByPost.get(p.id);
             return (
               <TableRow key={p.id}>

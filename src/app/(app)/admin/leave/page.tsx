@@ -26,7 +26,7 @@ export default async function LeaveAdminPage() {
         <h2 className="text-lg font-semibold">연차 관리 ({year}년)</h2>
         <GenerateButton year={year} />
       </div>
-      <p className="text-sm text-muted-foreground">입사일을 입력한 뒤 "일괄 산정"을 누르면 한국법 기준으로 자동 부여됩니다. 부여일수는 개별 수정 가능합니다.</p>
+      <p className="text-sm text-muted-foreground">입사일을 입력한 뒤 &quot;일괄 산정&quot;을 누르면 한국법 기준으로 자동 부여됩니다. 부여일수는 개별 수정 가능합니다.</p>
       <Table>
         <TableHeader>
           <TableRow><TableHead>이름</TableHead><TableHead>입사일</TableHead><TableHead>{year}년 부여일수</TableHead></TableRow>
