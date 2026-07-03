@@ -5,7 +5,14 @@ import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth";
 import { canApprove, type Role } from "@/lib/roles";
 import { countLeaveDays } from "@/lib/leave/calc";
+import { getLeaveCalendarEvents } from "@/lib/leave/calendar";
 import { LEAVE_TYPES, isSingleDayType, type LeaveType } from "@/lib/leave/types";
+
+/** 홈 캘린더: 특정 연·월의 전 직원 승인 연차 조회 (인증 사용자 한정) */
+export async function fetchLeaveCalendar(year: number, month: number) {
+  await requireUser();
+  return getLeaveCalendarEvents(year, month);
+}
 
 /**
  * 연차 결재선 구성 (업무일지와 별개).

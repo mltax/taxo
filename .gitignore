@@ -9,6 +9,9 @@ out/
 build/
 dist/
 
+# TypeScript incremental build cache
+*.tsbuildinfo
+
 # Environment / secrets
 .env
 .env*.local
