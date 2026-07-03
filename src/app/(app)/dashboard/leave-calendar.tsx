@@ -20,6 +20,15 @@ const SHORT_TYPE: Record<LeaveType, string> = {
   hourly_3: "3H",
 };
 
+/** 종류별 칩 색상 — 연차(종일)는 기존 그대로, 반차는 옅은 보라, 시차는 옅은 아이보리 */
+function chipClass(t: LeaveType): string {
+  if (t === "half_am" || t === "half_pm")
+    return "bg-violet-100 text-violet-700 dark:bg-violet-500/20 dark:text-violet-300";
+  if (t === "hourly_1" || t === "hourly_2" || t === "hourly_3")
+    return "border border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-400/20 dark:bg-amber-400/15 dark:text-amber-200";
+  return "bg-primary/10 text-primary"; // 연차(종일)
+}
+
 function ymd(d: Date): string {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, "0");
@@ -142,11 +151,11 @@ export function LeaveCalendar({
                   {dayEvents.slice(0, 3).map((e) => (
                     <div
                       key={e.userId + e.startDate}
-                      className="truncate rounded bg-primary/10 px-1 py-0.5 text-[11px] leading-tight text-primary"
+                      className={`truncate rounded px-1 py-0.5 text-[11px] leading-tight ${chipClass(e.leaveType)}`}
                       title={`${e.name} · ${SHORT_TYPE[e.leaveType]}`}
                     >
                       {e.name}
-                      <span className="text-primary/60"> {SHORT_TYPE[e.leaveType]}</span>
+                      <span className="opacity-70"> {SHORT_TYPE[e.leaveType]}</span>
                     </div>
                   ))}
                   {dayEvents.length > 3 && (
@@ -159,7 +168,18 @@ export function LeaveCalendar({
             );
           })}
         </div>
-        <p className="mt-2 text-xs text-muted-foreground">
+        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+          <span className="flex items-center gap-1">
+            <span className="inline-block h-2.5 w-2.5 rounded-sm bg-primary/25" />연차
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="inline-block h-2.5 w-2.5 rounded-sm bg-violet-200 dark:bg-violet-500/40" />반차
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="inline-block h-2.5 w-2.5 rounded-sm border border-amber-200 bg-amber-50 dark:bg-amber-400/25" />시차
+          </span>
+        </div>
+        <p className="mt-1 text-xs text-muted-foreground">
           승인 완료된 연차만 표시됩니다. (신청·대기 중 연차는 결재 완료 후 반영)
         </p>
       </CardContent>
