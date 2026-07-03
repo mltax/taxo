@@ -10,6 +10,7 @@ import {
 } from "@/lib/calendar/actions";
 import type { LeaveCalendarEvent } from "@/lib/leave/calendar";
 import type { CalendarEvent } from "@/lib/calendar/events";
+import { getHoliday } from "@/lib/calendar/holidays";
 import type { LeaveType } from "@/lib/leave/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -217,6 +218,7 @@ export function LeaveCalendar({
             const inMonth = d.getMonth() === month - 1;
             const isToday = cellStr === todayStr;
             const dow = i % 7;
+            const holiday = getHoliday(cellStr);
             const dayEvents = events.filter(
               (e) => e.startDate <= cellStr && cellStr <= e.endDate
             );
@@ -236,7 +238,7 @@ export function LeaveCalendar({
                       ? "font-bold text-primary"
                       : !inMonth
                         ? "text-muted-foreground/50"
-                        : dow === 0
+                        : holiday || dow === 0
                           ? "text-red-500"
                           : dow === 6
                             ? "text-blue-500"
@@ -252,6 +254,15 @@ export function LeaveCalendar({
                   )}
                 </div>
                 <div className="space-y-0.5">
+                  {/* 공휴일명 (붉은 톤) */}
+                  {inMonth && holiday && (
+                    <div
+                      className="truncate text-[10px] font-medium leading-tight text-red-500 dark:text-red-400"
+                      title={holiday}
+                    >
+                      {holiday}
+                    </div>
+                  )}
                   {/* 공유 일정 (회의·교육·세미나 등) */}
                   {dayEvents.slice(0, 2).map((ev) => (
                     <div
@@ -311,6 +322,9 @@ export function LeaveCalendar({
           </span>
           <span className="flex items-center gap-1">
             <span className="inline-block h-2.5 w-2.5 rounded-sm bg-emerald-200 dark:bg-emerald-500/40" />일정
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="inline-block h-2.5 w-2.5 rounded-sm bg-red-400 dark:bg-red-500/50" />공휴일
           </span>
         </div>
         <p className="mt-1 text-xs text-muted-foreground">
