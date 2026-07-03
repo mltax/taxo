@@ -1,12 +1,19 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
+import { ChevronLeftIcon, ChevronRightIcon, PlusIcon, XIcon } from "lucide-react";
 import { fetchLeaveCalendar } from "@/lib/leave/actions";
+import {
+  fetchCalendarEvents,
+  addCalendarEvent,
+  deleteCalendarEvent,
+} from "@/lib/calendar/actions";
 import type { LeaveCalendarEvent } from "@/lib/leave/calendar";
+import type { CalendarEvent } from "@/lib/calendar/events";
 import type { LeaveType } from "@/lib/leave/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -50,25 +57,41 @@ function buildCells(year: number, month: number): Date[] {
 export function LeaveCalendar({
   initialYear,
   initialMonth,
+  initialLeaves,
   initialEvents,
+  canManage,
 }: {
   initialYear: number;
   initialMonth: number;
-  initialEvents: LeaveCalendarEvent[];
+  initialLeaves: LeaveCalendarEvent[];
+  initialEvents: CalendarEvent[];
+  canManage: boolean;
 }) {
   const [year, setYear] = useState(initialYear);
   const [month, setMonth] = useState(initialMonth);
+  const [leaves, setLeaves] = useState(initialLeaves);
   const [events, setEvents] = useState(initialEvents);
   const [pending, startTransition] = useTransition();
+
+  // 일정 추가 폼 상태
+  const [adding, setAdding] = useState(false);
+  const [title, setTitle] = useState("");
+  const [evStart, setEvStart] = useState(ymd(new Date()));
+  const [evEnd, setEvEnd] = useState(ymd(new Date()));
+  const [error, setError] = useState("");
 
   const todayStr = ymd(new Date());
   const cells = buildCells(year, month);
 
   function go(y: number, m: number) {
     startTransition(async () => {
-      const ev = await fetchLeaveCalendar(y, m);
+      const [lv, ev] = await Promise.all([
+        fetchLeaveCalendar(y, m),
+        fetchCalendarEvents(y, m),
+      ]);
       setYear(y);
       setMonth(m);
+      setLeaves(lv);
       setEvents(ev);
     });
   }
@@ -79,6 +102,32 @@ export function LeaveCalendar({
     go(now.getFullYear(), now.getMonth() + 1);
   };
 
+  function saveEvent() {
+    const t = title.trim();
+    if (!t) return setError("일정명을 입력하세요.");
+    if (t.length > 10) return setError("일정명은 10자 이내입니다.");
+    if (!evStart || !evEnd) return setError("기간을 입력하세요.");
+    if (evEnd < evStart) return setError("종료일이 시작일보다 빠릅니다.");
+    setError("");
+    startTransition(async () => {
+      try {
+        await addCalendarEvent({ title: t, startDate: evStart, endDate: evEnd });
+        setEvents(await fetchCalendarEvents(year, month));
+        setTitle("");
+        setAdding(false);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "저장에 실패했습니다.");
+      }
+    });
+  }
+
+  function removeEvent(id: string) {
+    startTransition(async () => {
+      await deleteCalendarEvent(id);
+      setEvents(await fetchCalendarEvents(year, month));
+    });
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -87,6 +136,19 @@ export function LeaveCalendar({
             연차 캘린더 · {year}년 {month}월
           </CardTitle>
           <div className="flex items-center gap-1">
+            {canManage && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setAdding((v) => !v);
+                  setError("");
+                }}
+                disabled={pending}
+              >
+                <PlusIcon /> 일정 추가
+              </Button>
+            )}
             <Button variant="outline" size="sm" onClick={today} disabled={pending}>
               오늘
             </Button>
@@ -100,6 +162,45 @@ export function LeaveCalendar({
         </div>
       </CardHeader>
       <CardContent>
+        {canManage && adding && (
+          <div className="mb-3 rounded-md border bg-muted/30 p-3">
+            <div className="flex flex-wrap items-end gap-2">
+              <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+                시작일
+                <Input type="date" value={evStart} onChange={(e) => setEvStart(e.target.value)} className="h-8 w-auto" />
+              </label>
+              <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+                종료일
+                <Input type="date" value={evEnd} onChange={(e) => setEvEnd(e.target.value)} className="h-8 w-auto" />
+              </label>
+              <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+                일정명 (10자 이내)
+                <Input
+                  value={title}
+                  maxLength={10}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="예: 전사 회의"
+                  className="h-8 w-40"
+                />
+              </label>
+              <Button size="sm" onClick={saveEvent} disabled={pending}>
+                저장
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  setAdding(false);
+                  setError("");
+                }}
+                disabled={pending}
+              >
+                취소
+              </Button>
+            </div>
+            {error && <p className="mt-2 text-xs text-destructive">{error}</p>}
+          </div>
+        )}
         <div className="grid grid-cols-7 overflow-hidden rounded-md border text-sm">
           {WEEKDAYS.map((w, i) => (
             <div
@@ -117,6 +218,9 @@ export function LeaveCalendar({
             const isToday = cellStr === todayStr;
             const dow = i % 7;
             const dayEvents = events.filter(
+              (e) => e.startDate <= cellStr && cellStr <= e.endDate
+            );
+            const dayLeaves = leaves.filter(
               (e) => e.startDate <= cellStr && cellStr <= e.endDate
             );
             return (
@@ -148,7 +252,34 @@ export function LeaveCalendar({
                   )}
                 </div>
                 <div className="space-y-0.5">
-                  {dayEvents.slice(0, 3).map((e) => (
+                  {/* 공유 일정 (회의·교육·세미나 등) */}
+                  {dayEvents.slice(0, 2).map((ev) => (
+                    <div
+                      key={ev.id}
+                      className="flex items-center gap-0.5 rounded bg-emerald-100 px-1 py-0.5 text-[11px] leading-tight text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300"
+                      title={ev.title}
+                    >
+                      <span className="truncate">{ev.title}</span>
+                      {canManage && (
+                        <button
+                          type="button"
+                          onClick={() => removeEvent(ev.id)}
+                          disabled={pending}
+                          aria-label="일정 삭제"
+                          className="ml-auto shrink-0 opacity-50 hover:opacity-100"
+                        >
+                          <XIcon className="h-3 w-3" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                  {dayEvents.length > 2 && (
+                    <div className="px-1 text-[11px] text-muted-foreground">
+                      +{dayEvents.length - 2} 일정
+                    </div>
+                  )}
+                  {/* 연차 */}
+                  {dayLeaves.slice(0, 3).map((e) => (
                     <div
                       key={e.userId + e.startDate}
                       className={`truncate rounded px-1 py-0.5 text-[11px] leading-tight ${chipClass(e.leaveType)}`}
@@ -158,9 +289,9 @@ export function LeaveCalendar({
                       <span className="opacity-70"> {SHORT_TYPE[e.leaveType]}</span>
                     </div>
                   ))}
-                  {dayEvents.length > 3 && (
+                  {dayLeaves.length > 3 && (
                     <div className="px-1 text-[11px] text-muted-foreground">
-                      +{dayEvents.length - 3}명
+                      +{dayLeaves.length - 3}명
                     </div>
                   )}
                 </div>
@@ -177,6 +308,9 @@ export function LeaveCalendar({
           </span>
           <span className="flex items-center gap-1">
             <span className="inline-block h-2.5 w-2.5 rounded-sm border border-amber-200 bg-amber-50 dark:bg-amber-400/25" />시차
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="inline-block h-2.5 w-2.5 rounded-sm bg-emerald-200 dark:bg-emerald-500/40" />일정
           </span>
         </div>
         <p className="mt-1 text-xs text-muted-foreground">

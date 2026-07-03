@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { canApprove } from "@/lib/roles";
+import { canApprove, canManageEvents } from "@/lib/roles";
 import { getNameMap } from "@/lib/users/directory";
 import { dailyQuote, kstDate } from "@/lib/quotes";
 import { getLeaveCalendarEvents, kstToday } from "@/lib/leave/calendar";
+import { getCalendarEvents } from "@/lib/calendar/events";
 import { LeaveCalendar } from "./leave-calendar";
 import { BrandLogo } from "@/components/brand-logo";
 import { Badge } from "@/components/ui/badge";
@@ -21,7 +22,7 @@ export default async function DashboardPage() {
   const year = new Date().getFullYear();
   const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
   const cal = kstToday();
-  const [myClaimsRes, inboxRes, noticesRes, grantRes, leaveUsedRes, myPostsRes, ledgerRes, nameMap, leaveEvents] = await Promise.all([
+  const [myClaimsRes, inboxRes, noticesRes, grantRes, leaveUsedRes, myPostsRes, ledgerRes, nameMap, leaveEvents, calendarEvents] = await Promise.all([
     supabase.from("welfare_claims").select("status").eq("user_id", user.id),
     isApprover
       ? supabase
@@ -45,6 +46,7 @@ export default async function DashboardPage() {
     supabase.from("point_ledger").select("points").eq("user_id", user.id),
     getNameMap(),
     getLeaveCalendarEvents(cal.year, cal.month),
+    getCalendarEvents(cal.year, cal.month),
   ]);
 
   const myPending = (myClaimsRes.data ?? []).filter((c) => c.status === "pending").length;
@@ -129,7 +131,9 @@ export default async function DashboardPage() {
       <LeaveCalendar
         initialYear={cal.year}
         initialMonth={cal.month}
-        initialEvents={leaveEvents}
+        initialLeaves={leaveEvents}
+        initialEvents={calendarEvents}
+        canManage={canManageEvents(user.role)}
       />
 
       <div>
