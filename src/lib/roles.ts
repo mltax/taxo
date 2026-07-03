@@ -19,6 +19,11 @@ export function canManageLeave(role: Role): boolean {
   return role === "hr_manager" || role === "admin";
 }
 
+/** 캘린더 일정(사내 회의·외부교육·세미나 등) 관리 권한: 인사관리자 + 대표 */
+export function canManageEvents(role: Role): boolean {
+  return role === "hr_manager" || role === "admin";
+}
+
 export type BoardType = "free" | "work";
 
 /** 글 수정 권한: 자유게시판=글쓴이, 업무공유게시판=관리자만 */
