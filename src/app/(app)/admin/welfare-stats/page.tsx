@@ -15,6 +15,16 @@ interface ClaimRow {
   date: string;
 }
 
+// Supabase는 to-one 조인(users:user_id / welfare_items:item_id)을 배열로 추론하지만
+// 런타임에는 단일 객체가 반환된다. 조회 결과 형태를 명시한다.
+interface ClaimQueryRow {
+  amount: number | string | null;
+  status: string;
+  created_at: string | null;
+  users: { name: string } | null;
+  welfare_items: { name: string } | null;
+}
+
 export default async function WelfareStatsPage() {
   const me = await requireUser();
   if (!canAdmin(me.role)) redirect("/admin/leave");
@@ -24,7 +34,7 @@ export default async function WelfareStatsPage() {
     .select("amount, status, created_at, users:user_id(name), welfare_items:item_id(name)")
     .in("status", ["approved", "paid"]);
 
-  const rows: ClaimRow[] = (data ?? []).map((c: any) => ({
+  const rows: ClaimRow[] = ((data ?? []) as unknown as ClaimQueryRow[]).map((c) => ({
     person: c.users?.name ?? "-",
     item: c.welfare_items?.name ?? "-",
     amount: Number(c.amount),

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { nextStatus, type ClaimStatus, type ClaimAction } from "@/lib/welfare/state";
+import { nextStatus, type ClaimAction } from "@/lib/welfare/state";
 
 describe("welfare claim state machine", () => {
   it("approve: pending -> approved", () => {

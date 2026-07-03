@@ -55,7 +55,7 @@ export default async function LeaveInboxPage() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {rows.map((r: any) => (
+          {rows.map((r) => (
             <TableRow key={r.id}>
               <TableCell>{nameMap.get(r.user_id) ?? "-"}</TableCell>
               <TableCell>
