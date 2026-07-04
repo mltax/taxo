@@ -1,11 +1,17 @@
 "use server";
 
+import { after } from "next/server";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireUser } from "@/lib/auth";
 import { canApprove, type Role } from "@/lib/roles";
 import { countLeaveDays } from "@/lib/leave/calc";
 import { getLeaveCalendarEvents } from "@/lib/leave/calendar";
+import {
+  notifyLeaveApprovalRequest,
+  notifyLeaveResult,
+  notifyLeaveAdvanced,
+} from "@/lib/leave/notify";
 import { LEAVE_TYPES, isSingleDayType, type LeaveType } from "@/lib/leave/types";
 
 /** 홈 캘린더: 특정 연·월의 전 직원 승인 연차 조회 (인증 사용자 한정) */
@@ -69,19 +75,31 @@ export async function submitLeave(formData: FormData) {
   const days = countLeaveDays(start, end, leaveType);
   if (days <= 0) throw new Error("신청 일수가 0일입니다. 평일을 선택하세요.");
 
-  const { error } = await supabase.from("leave_requests").insert({
-    user_id: user.id,
-    start_date: start,
-    end_date: end,
-    days,
-    half_day: leaveType === "half_am" || leaveType === "half_pm",
-    leave_type: leaveType,
-    reason,
-    approver_id: chain[0],
-    next_approver_id: chain[1] ?? null,
-    stage: 1,
+  const { data: inserted, error } = await supabase
+    .from("leave_requests")
+    .insert({
+      user_id: user.id,
+      start_date: start,
+      end_date: end,
+      days,
+      half_day: leaveType === "half_am" || leaveType === "half_pm",
+      leave_type: leaveType,
+      reason,
+      approver_id: chain[0],
+      next_approver_id: chain[1] ?? null,
+      stage: 1,
+    })
+    .select("id")
+    .single();
+  if (error || !inserted) throw new Error("신청 저장에 실패했습니다.");
+  // 응답 후 1차 결재자에게 결재 요청 알림 (결재 흐름과 분리 — 실패해도 무해)
+  after(async () => {
+    try {
+      await notifyLeaveApprovalRequest(inserted.id as string);
+    } catch (e) {
+      console.error(e);
+    }
   });
-  if (error) throw new Error("신청 저장에 실패했습니다.");
   revalidatePath("/leave");
 }
 
@@ -95,6 +113,14 @@ export async function approveLeave(id: string) {
     p_approve: true,
   });
   if (error) throw new Error("승인 처리에 실패했습니다.");
+  // 결과 상태에 따라 다음 결재자(진행) 또는 신청자+공지(최종 승인)
+  after(async () => {
+    try {
+      await notifyLeaveAdvanced(id);
+    } catch (e) {
+      console.error(e);
+    }
+  });
   revalidatePath("/leave/inbox");
 }
 
@@ -111,6 +137,14 @@ export async function rejectLeave(id: string, reason: string) {
     p_reason: trimmed,
   });
   if (error) throw new Error("반려 처리에 실패했습니다.");
+  // 신청자에게 반려 결과 알림
+  after(async () => {
+    try {
+      await notifyLeaveResult(id, "rejected");
+    } catch (e) {
+      console.error(e);
+    }
+  });
   revalidatePath("/leave/inbox");
 }
 
