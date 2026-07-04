@@ -32,10 +32,25 @@ async function fetchLeave(id: string): Promise<LeaveRow | null> {
   return (data as LeaveRow) ?? null;
 }
 
-async function fetchUser(id: string): Promise<{ name: string; email: string } | null> {
+interface NotifyUser {
+  name: string;
+  email: string;
+  kakaowork_email: string | null;
+}
+
+async function fetchUser(id: string): Promise<NotifyUser | null> {
   const admin = createAdminClient();
-  const { data } = await admin.from("users").select("name, email").eq("id", id).single();
-  return (data as { name: string; email: string }) ?? null;
+  const { data } = await admin
+    .from("users")
+    .select("name, email, kakaowork_email")
+    .eq("id", id)
+    .single();
+  return (data as NotifyUser) ?? null;
+}
+
+/** 카카오워크 DM 조회용 이메일 — 별도 지정(kakaowork_email)이 있으면 우선, 없으면 로그인 이메일 */
+function dmEmail(u: NotifyUser): string {
+  return u.kakaowork_email || u.email;
 }
 
 function period(l: LeaveRow): string {
@@ -58,7 +73,7 @@ export async function notifyLeaveApprovalRequest(leaveId: string): Promise<void>
     `기간: ${period(l)} (${LEAVE_TYPE_LABEL[l.leave_type]})\n` +
     `일수: ${formatDays(l.days)}일\n` +
     `▶ 결재하기: ${SITE_URL}/leave/inbox`;
-  await sendKakaoworkDM(approver.email, text);
+  await sendKakaoworkDM(dmEmail(approver), text);
 }
 
 /** 신청자에게 승인/반려 결과 DM */
@@ -75,7 +90,7 @@ export async function notifyLeaveResult(
     decision === "approved"
       ? `✅ [연차 승인]\n기간: ${period(l)} (${LEAVE_TYPE_LABEL[l.leave_type]})\n일수: ${formatDays(l.days)}일\n연차가 최종 승인되었습니다.`
       : `❌ [연차 반려]\n기간: ${period(l)} (${LEAVE_TYPE_LABEL[l.leave_type]})\n사유: ${l.reject_reason ?? "-"}`;
-  await sendKakaoworkDM(requester.email, text);
+  await sendKakaoworkDM(dmEmail(requester), text);
 }
 
 /** 지정 공지방에 연차 승인 공지 (사유 등 개인정보 제외 — 이름·기간·종류만) */
