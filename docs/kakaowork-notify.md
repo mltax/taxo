@@ -22,17 +22,21 @@
 1. 카카오워크 **관리자 페이지 → 봇 관리(또는 개발자센터)** 에서 봇(App) 생성
 2. 발급된 **App Key**(Bearer 토큰) 복사
 
-### 2. 공지 대화방 conversation_id 확보
-1. 연차 승인 공지를 올릴 **단체 대화방**을 만들고 위 **봇을 초대**
-2. 해당 대화방의 **conversation_id** 확인
-   - 봇 API `GET /v1/conversations` 등으로 조회하거나 관리자 도구로 확인
+### 2. 공지방 Incoming Webhook (권장)
+개인 DM은 봇 App Key로, **연차 승인 공지는 Incoming Webhook**으로 보낸다(가장 간단, conversation_id 불필요).
+1. 연차 승인 공지를 올릴 **단체 대화방** 생성
+2. 카카오워크 **바로가기 → 확장 서비스 → Incoming Webhook** 선택 → 위 대화방 지정 → **Webhook URL** 확인
+3. 이 URL을 `KAKAOWORK_LEAVE_ANNOUNCE_WEBHOOK_URL` 로 등록
+
+> 대안: 봇을 공지방에 초대하고 그 방의 `conversation_id`를 `KAKAOWORK_LEAVE_ANNOUNCE_ID` 로 등록해도 된다.
+> 단, 봇의 그룹방 conversation_id는 조회가 까다로워 Webhook 방식을 권장한다.
 
 ### 3. 환경변수 등록
 로컬 `.env.local` 및 **Vercel 프로젝트 환경변수**에 등록:
 
 ```
 KAKAOWORK_APP_KEY=<발급받은 App Key>
-KAKAOWORK_LEAVE_ANNOUNCE_ID=<공지 대화방 conversation_id>
+KAKAOWORK_LEAVE_ANNOUNCE_WEBHOOK_URL=<공지방 Incoming Webhook URL>
 NEXT_PUBLIC_SITE_URL=https://taxo-two.vercel.app
 ```
 
