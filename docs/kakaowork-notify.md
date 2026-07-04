@@ -42,9 +42,12 @@ NEXT_PUBLIC_SITE_URL=https://taxo-two.vercel.app
 
 > Vercel: Settings → Environment Variables 에 Production 으로 추가 후 재배포.
 
-### 4. 직원 이메일 일치 확인
-- 개인 DM은 **직원의 앱 이메일 == 카카오워크 이메일**로 사용자를 찾는다.
-- 이메일이 다르면 해당 직원 DM은 skip 되고 로그가 남는다(결재는 정상).
+### 4. 직원 이메일 매칭
+- 개인 DM은 **직원 이메일로 카카오워크 사용자를 조회**(`find_by_email`)한다.
+- 앱 로그인 이메일(@hanyeongtax.com)과 카카오워크 로그인 이메일(gmail/naver 등)이 **다른 직원**은
+  `users.kakaowork_email` 컬럼에 카카오워크 로그인 이메일을 넣는다(없으면 `email` 로 폴백).
+  - 현재 매핑됨: 김다솜·이서현·천연주·최찬영·허애란 (마이그레이션 `0028` + 데이터)
+- 어떤 이메일로도 못 찾으면 해당 직원 DM만 skip 되고 로그가 남는다(결재는 정상).
 
 ## 사용 API (봇)
 
