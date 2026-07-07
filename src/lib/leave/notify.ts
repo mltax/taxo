@@ -3,6 +3,7 @@ import {
   sendKakaoworkDM,
   sendKakaoworkAnnounce,
   kakaoworkEnabled,
+  announceEnabled,
 } from "@/lib/kakaowork/client";
 import { LEAVE_TYPE_LABEL, type LeaveType } from "@/lib/leave/types";
 import { formatDays } from "@/lib/leave/calc";
@@ -95,7 +96,8 @@ export async function notifyLeaveResult(
 
 /** 지정 공지방에 연차 승인 공지 (사유 등 개인정보 제외 — 이름·기간·종류만) */
 export async function announceLeaveApproved(leaveId: string): Promise<void> {
-  if (!kakaoworkEnabled()) return;
+  // 공지는 App Key(DM)와 무관하게 웹훅만 있으면 동작한다.
+  if (!announceEnabled()) return;
   const l = await fetchLeave(leaveId);
   if (!l) return;
   const requester = await fetchUser(l.user_id);
@@ -109,7 +111,8 @@ export async function announceLeaveApproved(leaveId: string): Promise<void> {
 
 /** 결재 진행(leave_advance) 이후 결과 상태에 따라 알림 분기 */
 export async function notifyLeaveAdvanced(leaveId: string): Promise<void> {
-  if (!kakaoworkEnabled()) return;
+  // DM(App Key) 또는 공지(웹훅) 중 하나라도 설정돼 있으면 진행
+  if (!kakaoworkEnabled() && !announceEnabled()) return;
   const l = await fetchLeave(leaveId);
   if (!l) return;
   if (l.status === "approved") {
