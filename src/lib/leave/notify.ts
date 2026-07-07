@@ -111,10 +111,14 @@ export async function announceLeaveApproved(leaveId: string): Promise<void> {
 
 /** 결재 진행(leave_advance) 이후 결과 상태에 따라 알림 분기 */
 export async function notifyLeaveAdvanced(leaveId: string): Promise<void> {
+  console.log(
+    `[kakaowork][diag] notifyLeaveAdvanced leaveId=${leaveId} dmEnabled=${kakaoworkEnabled()} announceEnabled=${announceEnabled()}`
+  );
   // DM(App Key) 또는 공지(웹훅) 중 하나라도 설정돼 있으면 진행
   if (!kakaoworkEnabled() && !announceEnabled()) return;
   const l = await fetchLeave(leaveId);
   if (!l) return;
+  console.log(`[kakaowork][diag] leave status=${l.status}`);
   if (l.status === "approved") {
     // 최종 승인: 신청자에게 결과 + 공지방 안내
     await notifyLeaveResult(leaveId, "approved");

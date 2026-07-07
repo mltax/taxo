@@ -6,11 +6,24 @@
  * 발송 흐름(DM): 이메일 → 사용자 조회 → 1:1 대화 열기 → 메시지 전송.
  */
 const API_BASE = "https://api.kakaowork.com/v1";
-const APP_KEY = process.env.KAKAOWORK_APP_KEY;
+
+/**
+ * 환경변수 값 정리 — Vercel 등에서 값 칸에 "KEY=값"을 통째로 붙여넣는 실수를 방어한다.
+ * 앞뒤 공백 제거 + 선행 "KEY=" 접두어 제거.
+ */
+function cleanEnv(name: string): string | undefined {
+  let v = process.env[name];
+  if (!v) return undefined;
+  v = v.trim();
+  if (v.startsWith(`${name}=`)) v = v.slice(name.length + 1).trim();
+  return v || undefined;
+}
+
+const APP_KEY = cleanEnv("KAKAOWORK_APP_KEY");
 /** 연차 승인 공지 — Incoming Webhook URL (권장, 가장 간단) */
-const ANNOUNCE_WEBHOOK_URL = process.env.KAKAOWORK_LEAVE_ANNOUNCE_WEBHOOK_URL;
+const ANNOUNCE_WEBHOOK_URL = cleanEnv("KAKAOWORK_LEAVE_ANNOUNCE_WEBHOOK_URL");
 /** 연차 승인 공지 — 봇으로 게시할 대화방 conversation_id (봇이 참여 중이어야 함) */
-const ANNOUNCE_CONVERSATION_ID = process.env.KAKAOWORK_LEAVE_ANNOUNCE_ID;
+const ANNOUNCE_CONVERSATION_ID = cleanEnv("KAKAOWORK_LEAVE_ANNOUNCE_ID");
 
 /** 카카오워크 DM 활성화 여부 (App Key 필요) */
 export function kakaoworkEnabled(): boolean {
@@ -91,6 +104,9 @@ export async function sendKakaoworkDM(email: string, text: string): Promise<void
  * 둘 다 미설정 시 조용히 skip.
  */
 export async function sendKakaoworkAnnounce(text: string): Promise<void> {
+  console.log(
+    `[kakaowork][diag] announce webhookSet=${Boolean(ANNOUNCE_WEBHOOK_URL)} startsWithHttp=${ANNOUNCE_WEBHOOK_URL?.startsWith("http") ?? false} convIdSet=${Boolean(ANNOUNCE_CONVERSATION_ID)}`
+  );
   try {
     if (ANNOUNCE_WEBHOOK_URL) {
       const controller = new AbortController();
@@ -104,6 +120,8 @@ export async function sendKakaoworkAnnounce(text: string): Promise<void> {
         });
         if (!res.ok) {
           console.error(`[kakaowork] 공지 웹훅 실패 HTTP ${res.status}`);
+        } else {
+          console.log(`[kakaowork][diag] 공지 웹훅 OK ${res.status}`);
         }
       } finally {
         clearTimeout(timer);
