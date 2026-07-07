@@ -6,7 +6,7 @@ import {
   announceEnabled,
 } from "@/lib/kakaowork/client";
 import { LEAVE_TYPE_LABEL, type LeaveType } from "@/lib/leave/types";
-import { formatDays } from "@/lib/leave/calc";
+import { formatDays, formatPeriodKo } from "@/lib/leave/calc";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://taxo-two.vercel.app";
 
@@ -55,7 +55,7 @@ function dmEmail(u: NotifyUser): string {
 }
 
 function period(l: LeaveRow): string {
-  return l.start_date === l.end_date ? l.start_date : `${l.start_date} ~ ${l.end_date}`;
+  return formatPeriodKo(l.start_date, l.end_date);
 }
 
 /** 현재 결재 차례인 결재자에게 '결재 요청' DM */
@@ -72,7 +72,7 @@ export async function notifyLeaveApprovalRequest(leaveId: string): Promise<void>
     `🗓 [연차 결재 요청]\n` +
     `신청자: ${requester?.name ?? "-"}\n` +
     `기간: ${period(l)} (${LEAVE_TYPE_LABEL[l.leave_type]})\n` +
-    `일수: ${formatDays(l.days)}일\n` +
+    `일수: ${formatDays(l.days)}\n` +
     `▶ 결재하기: ${SITE_URL}/leave/inbox`;
   await sendKakaoworkDM(dmEmail(approver), text);
 }
@@ -89,7 +89,7 @@ export async function notifyLeaveResult(
   if (!requester?.email) return;
   const text =
     decision === "approved"
-      ? `✅ [연차 승인]\n기간: ${period(l)} (${LEAVE_TYPE_LABEL[l.leave_type]})\n일수: ${formatDays(l.days)}일\n연차가 최종 승인되었습니다.`
+      ? `✅ [연차 승인]\n기간: ${period(l)} (${LEAVE_TYPE_LABEL[l.leave_type]})\n일수: ${formatDays(l.days)}\n연차가 최종 승인되었습니다.`
       : `❌ [연차 반려]\n기간: ${period(l)} (${LEAVE_TYPE_LABEL[l.leave_type]})\n사유: ${l.reject_reason ?? "-"}`;
   await sendKakaoworkDM(dmEmail(requester), text);
 }
@@ -105,7 +105,7 @@ export async function announceLeaveApproved(leaveId: string): Promise<void> {
     `📢 [연차 승인 안내]\n` +
     `${requester?.name ?? "-"} 님\n` +
     `기간: ${period(l)} (${LEAVE_TYPE_LABEL[l.leave_type]})\n` +
-    `일수: ${formatDays(l.days)}일`;
+    `일수: ${formatDays(l.days)}`;
   await sendKakaoworkAnnounce(text);
 }
 

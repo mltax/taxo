@@ -59,3 +59,20 @@ export function formatDays(days: number): string {
 export function formatHours(days: number): string {
   return `${Number(days) * HOURS_PER_DAY}시간`;
 }
+
+const WEEKDAY_KO = ["일", "월", "화", "수", "목", "금", "토"];
+
+/** YYYY-MM-DD → "YYYY-MM-DD(요일)". 파싱 실패 시 원본 반환. */
+export function formatDateKo(dateStr: string): string {
+  if (!dateStr) return dateStr;
+  const d = new Date(`${dateStr}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return dateStr;
+  return `${dateStr}(${WEEKDAY_KO[d.getDay()]})`;
+}
+
+/** 기간 표기: 단일일이면 하나, 범위면 "start ~ end" (각 날짜에 요일 포함) */
+export function formatPeriodKo(start: string, end: string): string {
+  return start === end
+    ? formatDateKo(start)
+    : `${formatDateKo(start)} ~ ${formatDateKo(end)}`;
+}
