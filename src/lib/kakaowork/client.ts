@@ -12,9 +12,14 @@ const ANNOUNCE_WEBHOOK_URL = process.env.KAKAOWORK_LEAVE_ANNOUNCE_WEBHOOK_URL;
 /** 연차 승인 공지 — 봇으로 게시할 대화방 conversation_id (봇이 참여 중이어야 함) */
 const ANNOUNCE_CONVERSATION_ID = process.env.KAKAOWORK_LEAVE_ANNOUNCE_ID;
 
-/** 카카오워크 연동 활성화 여부 (App Key 미설정 시 전 기능 no-op) */
+/** 카카오워크 DM 활성화 여부 (App Key 필요) */
 export function kakaoworkEnabled(): boolean {
   return Boolean(APP_KEY);
+}
+
+/** 연차 승인 공지 활성화 여부 — 웹훅 URL은 App Key 없이도 동작한다. */
+export function announceEnabled(): boolean {
+  return Boolean(ANNOUNCE_WEBHOOK_URL) || Boolean(APP_KEY && ANNOUNCE_CONVERSATION_ID);
 }
 
 /** 외부 호출이 매달리지 않도록 4초 타임아웃 */
@@ -91,12 +96,15 @@ export async function sendKakaoworkAnnounce(text: string): Promise<void> {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), 4000);
       try {
-        await fetch(ANNOUNCE_WEBHOOK_URL, {
+        const res = await fetch(ANNOUNCE_WEBHOOK_URL, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json; charset=utf-8" },
           body: JSON.stringify({ text }),
           signal: controller.signal,
         });
+        if (!res.ok) {
+          console.error(`[kakaowork] 공지 웹훅 실패 HTTP ${res.status}`);
+        }
       } finally {
         clearTimeout(timer);
       }
@@ -104,7 +112,11 @@ export async function sendKakaoworkAnnounce(text: string): Promise<void> {
     }
     if (APP_KEY && ANNOUNCE_CONVERSATION_ID) {
       await sendMessage(ANNOUNCE_CONVERSATION_ID, text);
+      return;
     }
+    console.warn(
+      "[kakaowork] 공지 대상 미설정 — KAKAOWORK_LEAVE_ANNOUNCE_WEBHOOK_URL(또는 APP_KEY+ANNOUNCE_ID)을 확인하세요"
+    );
   } catch (e) {
     console.error("[kakaowork] 공지 발송 실패", e);
   }
