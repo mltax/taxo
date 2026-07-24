@@ -6,7 +6,7 @@ import {
   LEAVE_STATUS_LABEL, LEAVE_TYPE_LABEL,
   type LeaveStatus, type LeaveType,
 } from "@/lib/leave/types";
-import { formatDays } from "@/lib/leave/calc";
+import { formatDays, formatDateKo } from "@/lib/leave/calc";
 import { Badge } from "@/components/ui/badge";
 import {
   Card, CardContent, CardHeader, CardTitle,
@@ -70,7 +70,7 @@ export default async function LeavePage() {
             {requests.map((r) => (
               <TableRow key={r.id}>
                 <TableCell>
-                  {r.start_date}{r.leave_type === "full" && r.end_date !== r.start_date ? ` ~ ${r.end_date}` : ""}
+                  {formatDateKo(r.start_date)}{r.leave_type === "full" && r.end_date !== r.start_date ? ` ~ ${formatDateKo(r.end_date)}` : ""}
                 </TableCell>
                 <TableCell>{LEAVE_TYPE_LABEL[r.leave_type as LeaveType]}</TableCell>
                 <TableCell>{formatDays(Number(r.days))}</TableCell>
