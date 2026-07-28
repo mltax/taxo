@@ -225,6 +225,19 @@ export function LeaveCalendar({
             const dayLeaves = leaves.filter(
               (e) => e.startDate <= cellStr && cellStr <= e.endDate
             );
+            // 일정 + 연차를 합쳐 최대 5개 표시, 초과분은 "+N건" 호버(title)로 전체 노출
+            const cellItems = [
+              ...dayEvents.map((ev) => ({ type: "event" as const, ev })),
+              ...dayLeaves.map((lv) => ({ type: "leave" as const, lv })),
+            ];
+            const cellOverflow = cellItems.length - 5;
+            const cellOverflowTitle = cellItems
+              .map((it) =>
+                it.type === "event"
+                  ? `📅 ${it.ev.title}`
+                  : `${it.lv.name} · ${SHORT_TYPE[it.lv.leaveType]}`
+              )
+              .join("\n");
             return (
               <div
                 key={cellStr}
@@ -263,46 +276,44 @@ export function LeaveCalendar({
                       {holiday}
                     </div>
                   )}
-                  {/* 공유 일정 (회의·교육·세미나 등) */}
-                  {dayEvents.slice(0, 2).map((ev) => (
-                    <div
-                      key={ev.id}
-                      className="flex items-center gap-0.5 rounded bg-emerald-100 px-1 py-0.5 text-[11px] leading-tight text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300"
-                      title={ev.title}
-                    >
-                      <span className="truncate">{ev.title}</span>
-                      {canManage && (
-                        <button
-                          type="button"
-                          onClick={() => removeEvent(ev.id)}
-                          disabled={pending}
-                          aria-label="일정 삭제"
-                          className="ml-auto shrink-0 opacity-50 hover:opacity-100"
-                        >
-                          <XIcon className="h-3 w-3" />
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                  {dayEvents.length > 2 && (
-                    <div className="px-1 text-[11px] text-muted-foreground">
-                      +{dayEvents.length - 2} 일정
-                    </div>
+                  {/* 일정 + 연차 (합쳐서 최대 5개) */}
+                  {cellItems.slice(0, 5).map((it) =>
+                    it.type === "event" ? (
+                      <div
+                        key={`ev-${it.ev.id}`}
+                        className="flex items-center gap-0.5 rounded bg-emerald-100 px-1 py-0.5 text-[11px] leading-tight text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300"
+                        title={it.ev.title}
+                      >
+                        <span className="truncate">{it.ev.title}</span>
+                        {canManage && (
+                          <button
+                            type="button"
+                            onClick={() => removeEvent(it.ev.id)}
+                            disabled={pending}
+                            aria-label="일정 삭제"
+                            className="ml-auto shrink-0 opacity-50 hover:opacity-100"
+                          >
+                            <XIcon className="h-3 w-3" />
+                          </button>
+                        )}
+                      </div>
+                    ) : (
+                      <div
+                        key={`lv-${it.lv.userId}-${it.lv.startDate}`}
+                        className={`truncate rounded px-1 py-0.5 text-[11px] leading-tight ${chipClass(it.lv.leaveType)}`}
+                        title={`${it.lv.name} · ${SHORT_TYPE[it.lv.leaveType]}`}
+                      >
+                        {it.lv.name}
+                        <span className="opacity-70"> {SHORT_TYPE[it.lv.leaveType]}</span>
+                      </div>
+                    )
                   )}
-                  {/* 연차 */}
-                  {dayLeaves.slice(0, 3).map((e) => (
+                  {cellOverflow > 0 && (
                     <div
-                      key={e.userId + e.startDate}
-                      className={`truncate rounded px-1 py-0.5 text-[11px] leading-tight ${chipClass(e.leaveType)}`}
-                      title={`${e.name} · ${SHORT_TYPE[e.leaveType]}`}
+                      className="cursor-default rounded bg-muted px-1 py-0.5 text-[11px] font-medium text-muted-foreground hover:bg-muted/70"
+                      title={cellOverflowTitle}
                     >
-                      {e.name}
-                      <span className="opacity-70"> {SHORT_TYPE[e.leaveType]}</span>
-                    </div>
-                  ))}
-                  {dayLeaves.length > 3 && (
-                    <div className="px-1 text-[11px] text-muted-foreground">
-                      +{dayLeaves.length - 3}명
+                      +{cellOverflow}건 더 (호버)
                     </div>
                   )}
                 </div>
