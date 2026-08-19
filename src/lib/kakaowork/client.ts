@@ -104,9 +104,6 @@ export async function sendKakaoworkDM(email: string, text: string): Promise<void
  * 둘 다 미설정 시 조용히 skip.
  */
 export async function sendKakaoworkAnnounce(text: string): Promise<void> {
-  console.log(
-    `[kakaowork][diag] announce webhookSet=${Boolean(ANNOUNCE_WEBHOOK_URL)} startsWithHttp=${ANNOUNCE_WEBHOOK_URL?.startsWith("http") ?? false} convIdSet=${Boolean(ANNOUNCE_CONVERSATION_ID)}`
-  );
   try {
     if (ANNOUNCE_WEBHOOK_URL) {
       const controller = new AbortController();
@@ -120,8 +117,6 @@ export async function sendKakaoworkAnnounce(text: string): Promise<void> {
         });
         if (!res.ok) {
           console.error(`[kakaowork] 공지 웹훅 실패 HTTP ${res.status}`);
-        } else {
-          console.log(`[kakaowork][diag] 공지 웹훅 OK ${res.status}`);
         }
       } finally {
         clearTimeout(timer);
