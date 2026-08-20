@@ -63,6 +63,7 @@ export function navItemsForRole(role: Role): NavItem[] {
 
   const items: NavItem[] = [
     { label: "홈", href: "/dashboard" },
+    { label: "세무 챗봇", href: "/chatbot" },
     { label: "한영복지신청", children: welfareChildren },
     {
       label: "게시판",
